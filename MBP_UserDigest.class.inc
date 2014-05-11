@@ -24,10 +24,10 @@ class MBP_UserDigest
    *   Connection credentials for RabbotMQ
    *
    * @param array $config
-   *   RabbitMQ related configuration envioment settings.
+   *   RabbitMQ related configuration environment settings.
    *
    * @param array $settings
-   *  Additional configuration envioment settings
+   *  Additional configuration environment settings
    */
   public function __construct($credentials, $config, $settings) {
     $this->messageBroker = new MessageBroker($credentials, $config);
@@ -43,7 +43,8 @@ class MBP_UserDigest
     
     echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
     
-    $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/digest';
+    $dayOfTheWeek = date('N');
+    $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?drupal_register_day=' . $dayOfTheWeek;
     
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $userApiUrl);
