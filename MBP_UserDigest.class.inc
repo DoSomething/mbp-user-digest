@@ -4,6 +4,8 @@ use DoSomething\MBStatTracker\StatHat;
 
 class MBP_UserDigest
 {
+  
+  const DEFAULT_FIRST_NAME = "Doer";
 
   /**
    * Message Broker connection to RabbitMQ
@@ -55,7 +57,7 @@ class MBP_UserDigest
 
     foreach($results as $resultCount => $result) {
       if (!isset($result->first_name) ||  $result->first_name == '') {
-        $result->first_name = 'Doer';
+        $result->first_name = $self::DEFAULT_FIRST_NAME;
       }
       $payload = array(
         'email' => $result->email,

@@ -15,7 +15,7 @@ require_once __DIR__ . '/vendor/autoload.php';
 require __DIR__ . '/mb-secure-config.inc';
 require __DIR__ . '/mb-config.inc';
 
-require __DIR__ . '/MBC_UserDigest.class.inc';
+require __DIR__ . '/MBP_UserDigest.class.inc';
 
 // Settings
 $credentials = array(

@@ -1,5 +1,5 @@
 {
-    "name": "DoSomething/mbc-user-digest",
+    "name": "DoSomething/mbp-user-digest",
     "type": "library",
     "version": "0.1.0",
     "description": "Consumer application for the Message Broker system that consumes entries in the userDigestQueue The queue entries are used to trigger composing of a campaign activity digest message that's sent as a batch submission to Mandrill as a single Send-Template request daily.",
