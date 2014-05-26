@@ -42,38 +42,44 @@ class MBP_UserDigest
    * Collect users (email) for digest message batch
    */
   private function produceUserDigestQueue() {
-    
+
     echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
-    
-    $dayOfTheWeek = date('N');
-    $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?drupal_register_day=' . $dayOfTheWeek;
-    
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $userApiUrl);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    $jsonResult = curl_exec($ch);
-    curl_close($ch);
-    $results = json_decode($jsonResult);
 
-    foreach($results as $resultCount => $result) {
-      if (!isset($result->first_name) ||  $result->first_name == '') {
-        $result->first_name = $self::DEFAULT_FIRST_NAME;
+    $pageCount = 1;
+    do {
+  
+      $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?page=' . $pageCount . '&pageSize=' . $self::PAGE_SIZE;
+  
+      $ch = curl_init();
+      curl_setopt($ch, CURLOPT_URL, $userApiUrl);
+      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+      $jsonResult = curl_exec($ch);
+      curl_close($ch);
+      $results = json_decode($jsonResult);
+  
+      foreach($results as $resultCount => $result) {
+        if (!isset($result->first_name) ||  $result->first_name == '') {
+          $result->first_name = $self::DEFAULT_FIRST_NAME;
+        }
+        $payload = array(
+          'email' => $result->email,
+          'drupal_uid' => $result->drupal_uid,
+          'campaigns' => $result->campaigns,
+          'merge_vars' => array(
+            'FNAME' => ucwords(strtolower($result->first_name)),
+          )
+        );
+        $payload = serialize($payload);
+        $this->messageBroker->publishMessage($payload);
       }
-      $payload = array(
-        'email' => $result->email,
-        'drupal_uid' => $result->drupal_uid,
-        'campaigns' => $result->campaigns,
-        'merge_vars' => array(
-          'FNAME' => ucwords(strtolower($result->first_name)),
-        )
-      );
-      $payload = serialize($payload);
-      $this->messageBroker->publishMessage($payload);
-    }
+      
+      $pageCount++;
 
-    $this->statHat->addStatName('produceUserDigestQueue');
-    $this->statHat->reportCount($resultCount);
-    
+      $this->statHat->addStatName('produceUserDigestQueue');
+      $this->statHat->reportCount($resultCount);
+
+    } while ($resultCount == $self::PAGE_SIZE);
+
     echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $resultCount . ' queued - ' . date('D M j G:i:s T Y') . ' -------', "\n";
   }
   
