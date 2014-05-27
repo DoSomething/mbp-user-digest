@@ -6,6 +6,7 @@ class MBP_UserDigest
 {
   
   const DEFAULT_FIRST_NAME = "Doer";
+  const PAGE_SIZE = 500;
 
   /**
    * Message Broker connection to RabbitMQ
@@ -49,14 +50,14 @@ class MBP_UserDigest
     do {
   
       $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?page=' . $pageCount . '&pageSize=' . $self::PAGE_SIZE;
-  
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $userApiUrl);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
       $jsonResult = curl_exec($ch);
       curl_close($ch);
-      $results = json_decode($jsonResult);
-  
+      $returned = json_decode($jsonResult);
+      $results = $returned->results;
+
       foreach($results as $resultCount => $result) {
         if (!isset($result->first_name) ||  $result->first_name == '') {
           $result->first_name = $self::DEFAULT_FIRST_NAME;
@@ -72,13 +73,12 @@ class MBP_UserDigest
         $payload = serialize($payload);
         $this->messageBroker->publishMessage($payload);
       }
-      
       $pageCount++;
 
-      $this->statHat->addStatName('produceUserDigestQueue');
-      $this->statHat->reportCount($resultCount);
-
     } while ($resultCount == $self::PAGE_SIZE);
+
+    $this->statHat->addStatName('produceUserDigestQueue');
+    $this->statHat->reportCount($resultCount);
 
     echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $resultCount . ' queued - ' . date('D M j G:i:s T Y') . ' -------', "\n";
   }
