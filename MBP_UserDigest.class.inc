@@ -42,14 +42,14 @@ class MBP_UserDigest
   /**
    * Collect users (email) for digest message batch
    */
-  private function produceUserDigestQueue() {
+  public function produceUserDigestQueue() {
 
     echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
 
     $pageCount = 1;
     do {
   
-      $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?page=' . $pageCount . '&pageSize=' . $self::PAGE_SIZE;
+      $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $userApiUrl);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -60,22 +60,43 @@ class MBP_UserDigest
 
       foreach($results as $resultCount => $result) {
         if (!isset($result->first_name) ||  $result->first_name == '') {
-          $result->first_name = $self::DEFAULT_FIRST_NAME;
+          $result->first_name = self::DEFAULT_FIRST_NAME;
         }
-        $payload = array(
-          'email' => $result->email,
-          'drupal_uid' => $result->drupal_uid,
-          'campaigns' => $result->campaigns,
-          'merge_vars' => array(
-            'FNAME' => ucwords(strtolower($result->first_name)),
-          )
-        );
-        $payload = serialize($payload);
-        $this->messageBroker->publishMessage($payload);
+        $campaigns = array();
+        foreach ($result->campaigns as $campaignCount => $campaign) {
+          $campaigns[$campaignCount] = array(
+            'nid' => $campaign->nid,
+          );
+          if (isset($campaign->signup)) {
+            $signupBits = explode('-', $campaign->signup);
+            $signupDate = substr($signupBits[2], 0, 2) . '-' . $signupBits[1] . '-' . $signupBits[0];
+            $campaigns[$campaignCount]['signup'] = strtotime($signupDate);
+          }
+          elseif (isset($campaign->reportback)) {
+            $reportbackBits = explode('-', $campaign->reportback);
+            $reportbackDate = substr($reportbackBits[2], 0, 2) . '-' . $reportbackBits[1] . '-' . $reportbackBits[0];
+            $campaigns[$campaignCount]['reportback'] = strtotime($reportbackDate);
+          }
+        }
+        if (isset($result->email) && isset($result->drupal_uid)) {
+          $payload = array(
+            'email' => $result->email,
+            'drupal_uid' => $result->drupal_uid,
+            'campaigns' => $campaigns,
+            'merge_vars' => array(
+              'FNAME' => ucwords(strtolower($result->first_name)),
+            )
+          );
+          $payload = json_encode($payload);
+          $this->messageBroker->publishMessage($payload);
+        }
+        else {
+          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing email or drupal_uid: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+        }
       }
       $pageCount++;
 
-    } while ($resultCount == $self::PAGE_SIZE);
+    } while ($resultCount + 1 == self::PAGE_SIZE);
 
     $this->statHat->addStatName('produceUserDigestQueue');
     $this->statHat->reportCount($resultCount);
