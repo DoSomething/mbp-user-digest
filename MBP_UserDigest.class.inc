@@ -78,20 +78,24 @@ class MBP_UserDigest
             $campaigns[$campaignCount]['reportback'] = strtotime($reportbackDate);
           }
         }
-        if (isset($result->email) && isset($result->drupal_uid)) {
+        if (isset($result->email)) {
           $payload = array(
             'email' => $result->email,
-            'drupal_uid' => $result->drupal_uid,
             'campaigns' => $campaigns,
             'merge_vars' => array(
               'FNAME' => ucwords(strtolower($result->first_name)),
             )
           );
+          // 28 May 2013, 331,000 entries in the mb-user db not have
+          // drupal_uid values.
+          if (isset($result->drupal_uid)) {
+            $payload['drupal_uid'] = $result->drupal_uid;
+          }
           $payload = json_encode($payload);
           $this->messageBroker->publishMessage($payload);
         }
         else {
-          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing email or drupal_uid: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
         }
       }
       $pageCount++;
