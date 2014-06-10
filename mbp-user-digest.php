@@ -35,14 +35,12 @@ $config = array(
   ),
   'queue' => array(
     array(
-      array(
-        'name' => getenv("MB_USER_DIGEST_QUEUE"),
-        'passive' => getenv("MB_USER_DIGEST_QUEUE_PASSIVE"),
-        'durable' => getenv("MB_USER_DIGEST_QUEUE_DURABLE"),
-        'exclusive' => getenv("MB_USER_DIGEST_QUEUE_EXCLUSIVE"),
-        'auto_delete' => getenv("MB_USER_DIGEST_QUEUE_AUTO_DELETE"),
-        'bindingKey' => getenv("MB_USER_DIGEST_QUEUE_TOPIC_MB_TRANSACTIONAL_EXCHANGE_PATTERN"),
-      ),
+      'name' => getenv("MB_USER_DIGEST_QUEUE"),
+      'passive' => getenv("MB_USER_DIGEST_QUEUE_PASSIVE"),
+      'durable' => getenv("MB_USER_DIGEST_QUEUE_DURABLE"),
+      'exclusive' => getenv("MB_USER_DIGEST_QUEUE_EXCLUSIVE"),
+      'auto_delete' => getenv("MB_USER_DIGEST_QUEUE_AUTO_DELETE"),
+      'bindingKey' => getenv("MB_USER_DIGEST_QUEUE_TOPIC_MB_TRANSACTIONAL_EXCHANGE_PATTERN"),
     ),
   ),
 );
@@ -56,6 +54,9 @@ echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', "
 $mbpUserDigest = new MBP_UserDigest($credentials, $config, $settings);
 
 // Gather digest message mailing list
-$mbpUserDisgest->produceUserDigestQueue();
+$mbpUserDigest->produceUserDigestQueue();
+
+// Create test entries
+// $mbpUserDigest->produceTestUserDigestQueue();
 
 echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', "\n";
