@@ -4,7 +4,7 @@ use DoSomething\MBStatTracker\StatHat;
 
 class MBP_UserDigest
 {
-  
+
   const DEFAULT_FIRST_NAME = "Doer";
   const PAGE_SIZE = 500;
 
@@ -38,7 +38,7 @@ class MBP_UserDigest
     $this->statHat = new StatHat($settings['stathat_ez_key'], 'mbp-user-digest:');
     $this->statHat->setIsProduction(FALSE);
   }
-  
+
   /**
    * Collect users (email) for digest message batch
    */
@@ -48,7 +48,7 @@ class MBP_UserDigest
 
     $pageCount = 1;
     do {
-  
+
       $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $userApiUrl);
@@ -65,20 +65,16 @@ class MBP_UserDigest
         $campaigns = array();
         foreach ($result->campaigns as $campaignCount => $campaign) {
           $campaigns[$campaignCount] = array(
-            'nid' => $campaign->nid,
+            'nid' => $campaign->nid
           );
           if (isset($campaign->signup)) {
-            $signupBits = explode('-', $campaign->signup);
-            $signupDate = substr($signupBits[2], 0, 2) . '-' . $signupBits[1] . '-' . $signupBits[0];
-            $campaigns[$campaignCount]['signup'] = strtotime($signupDate);
+            $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
           }
-          elseif (isset($campaign->reportback)) {
-            $reportbackBits = explode('-', $campaign->reportback);
-            $reportbackDate = substr($reportbackBits[2], 0, 2) . '-' . $reportbackBits[1] . '-' . $reportbackBits[0];
-            $campaigns[$campaignCount]['reportback'] = strtotime($reportbackDate);
+          if (isset($campaign->reportback)) {
+            $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
           }
         }
-        if (isset($result->email)) {
+        if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
           $payload = array(
             'email' => $result->email,
             'campaigns' => $campaigns,
@@ -95,7 +91,7 @@ class MBP_UserDigest
           $this->messageBroker->publishMessage($payload);
         }
         else {
-          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
         }
       }
       $pageCount++;
@@ -108,4 +104,28 @@ class MBP_UserDigest
     echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $resultCount . ' queued - ' . date('D M j G:i:s T Y') . ' -------', "\n";
   }
   
+  /**
+   * Collect test users (email) for digest message batch
+   */
+  public function produceTestUserDigestQueue() {
+
+    $payload = array(
+      'email' => 'dlee+digest-test01@dosomething.org',
+      'campaigns' => array(
+        0 => array(
+          'nid' => 830,
+          'signup' => 12345678
+        ),
+      ),
+      'merge_vars' => array(
+        'FNAME' => 'Dee',
+      ),
+      'drupal_uid' => 666
+    );
+
+    $payload = json_encode($payload);
+    $this->messageBroker->publishMessage($payload);
+
+  }
+
 }

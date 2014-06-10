@@ -56,4 +56,7 @@ $mbpUserDigest = new MBP_UserDigest($credentials, $config, $settings);
 // Gather digest message mailing list
 $mbpUserDigest->produceUserDigestQueue();
 
+// Create test entries
+// $mbpUserDigest->produceTestUserDigestQueue();
+
 echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', "\n";
