@@ -151,6 +151,11 @@ class MBP_UserDigest
       'jlorch@dosomething.org',
       'dlee@dosomething.org',
       'mlidey@dosomething.org',
+      'qaasst@dosomething.org',
+      'qualityassuranceqa@yahoo.com',
+      'qualityassuranceqa@aol.com',
+      'qualityassuranceqa@hotmail.com',
+      'apatheticslacker@gmail.com',
     );
 
     return $testUsers;
