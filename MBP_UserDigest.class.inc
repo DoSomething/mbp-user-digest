@@ -42,10 +42,11 @@ class MBP_UserDigest
   /**
    * Collect users (email) for digest message batch
    */
-  public function produceUserDigestQueue() {
+  public function produceUserDigestQueue($testUsers = array()) {
 
-    echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
+    echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
 
+    $publishCount = 0;
     $pageCount = 1;
     do {
 
@@ -59,14 +60,24 @@ class MBP_UserDigest
       $results = $returned->results;
 
       foreach($results as $resultCount => $result) {
+
         if (!isset($result->first_name) ||  $result->first_name == '') {
           $result->first_name = self::DEFAULT_FIRST_NAME;
         }
         $campaigns = array();
         foreach ($result->campaigns as $campaignCount => $campaign) {
-          $campaigns[$campaignCount] = array(
-            'nid' => $campaign->nid
-          );
+          if (isset($campaign->nid)) {
+            $campaigns[$campaignCount] = array(
+              'nid' => $campaign->nid
+            );
+          }
+          else {
+            echo("<br />Missing campaign activity nid!<br />");
+            echo('<pre>');
+            print_r($result);
+            echo('</pre>');
+          }
+
           if (isset($campaign->signup)) {
             $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
           }
@@ -82,16 +93,33 @@ class MBP_UserDigest
               'FNAME' => ucwords(strtolower($result->first_name)),
             )
           );
-          // 28 May 2013, 331,000 entries in the mb-user db not have
-          // drupal_uid values.
           if (isset($result->drupal_uid)) {
             $payload['drupal_uid'] = $result->drupal_uid;
           }
-          $payload = json_encode($payload);
-          $this->messageBroker->publishMessage($payload);
+
+          if ((isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers))
+              || count($testUsers) == 0) {
+            echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+            $payloadTest1 = $payload;
+
+            // Send duplicate messages of each test user
+            $payloadTest1['email'] = 'dlee@dosomething.org';
+            $payloadTest2 = $payload;
+            $payloadTest2['email'] = 'mlidey@dosomething.org';
+
+            $payload = json_encode($payload);
+            $this->messageBroker->publishMessage($payload);
+
+            $payloadTest1 = json_encode($payloadTest1);
+            $this->messageBroker->publishMessage($payloadTest1);
+            $payloadTest2 = json_encode($payloadTest2);
+            $this->messageBroker->publishMessage($payloadTest2);
+
+            $publishCount++;
+          }
         }
         else {
-          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
         }
       }
       $pageCount++;
@@ -99,33 +127,38 @@ class MBP_UserDigest
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
     $this->statHat->addStatName('produceUserDigestQueue');
-    $this->statHat->reportCount($resultCount);
+    $this->statHat->reportCount($publishCount);
 
-    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $resultCount . ' queued - ' . date('D M j G:i:s T Y') . ' -------', "\n";
+    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
   }
   
   /**
-   * Collect test users (email) for digest message batch
+   * Test groups
    */
-  public function produceTestUserDigestQueue() {
+  public function produceTestUserGroupDigestQueue() {
 
-    $payload = array(
-      'email' => 'dlee+digest-test01@dosomething.org',
-      'campaigns' => array(
-        0 => array(
-          'nid' => 830,
-          'signup' => 12345678
-        ),
-      ),
-      'merge_vars' => array(
-        'FNAME' => 'Dee',
-      ),
-      'drupal_uid' => 666
+    $testUsers = array(
+      'cstowell@dosomething.org',
+      'kradford@dosomething.org',
+      'qaasst@dosomething.org',
+      'lpatton@dosomething.org',
+      'mnelson@dosomething.org',
+      'mfantini@dosomething.org',
+      'nhirabayashi@dosomething.org',
+      'aruderman@dosomething.org',
+      'nmody@dosomething.org',
+      'bkassoy@dosomething.org',
+      'jlorch@dosomething.org',
+      'dlee@dosomething.org',
+      'mlidey@dosomething.org',
+      'qaasst@dosomething.org',
+      'qualityassuranceqa@yahoo.com',
+      'qualityassuranceqa@aol.com',
+      'qualityassuranceqa@hotmail.com',
+      'apatheticslacker@gmail.com',
     );
 
-    $payload = json_encode($payload);
-    $this->messageBroker->publishMessage($payload);
-
+    return $testUsers;
   }
 
 }

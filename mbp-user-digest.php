@@ -53,10 +53,10 @@ echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', "
 // Kick off
 $mbpUserDigest = new MBP_UserDigest($credentials, $config, $settings);
 
-// Gather digest message mailing list
-$mbpUserDigest->produceUserDigestQueue();
-
 // Create test entries
-// $mbpUserDigest->produceTestUserDigestQueue();
+$testUsers = $mbpUserDigest->produceTestUserGroupDigestQueue();
+
+// Gather digest message mailing list
+$mbpUserDigest->produceUserDigestQueue($testUsers);
 
 echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', "\n";
