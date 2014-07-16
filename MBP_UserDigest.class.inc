@@ -60,18 +60,20 @@ class MBP_UserDigest
       $results = $returned->results;
 
       foreach($results as $resultCount => $result) {
-        
-        if (upper case) {
-          
+
+        if (preg_match('/[A-Z]/', $result->email)) {
+
           // http://localhost:4722/user?email=Hbush1987@gmail.com&exactCase=1
-          $deleteUserApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/user?email=' . $result->email;
+          $deleteUserApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/user?email=' . $result->email . '&exactCase=1';
           $ch = curl_init();
           curl_setopt($ch, CURLOPT_URL,$deleteUserApiUrl);
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
-          $result = curl_exec($ch);
+          $cURLResult = curl_exec($ch);
           $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
           curl_close($ch);
-          
+
+          echo '** mbp-user-digest->produceUserDigestQueue ' . $result->email . ' REMOVED from mb-user database. **', "\n<br />";
+
         }
         else {
 
@@ -111,24 +113,13 @@ class MBP_UserDigest
               $payload['drupal_uid'] = $result->drupal_uid;
             }
   
-            if ((isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers))
-                || count($testUsers) == 0) {
+            if ( (isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers)) ||
+                 (count($testUsers) == 0) ) {
               echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
-              $payloadTest1 = $payload;
-  
-              // Send duplicate messages of each test user
-              $payloadTest1['email'] = 'dlee@dosomething.org';
-              $payloadTest2 = $payload;
-              $payloadTest2['email'] = 'mlidey@dosomething.org';
   
               $payload = json_encode($payload);
               $this->messageBroker->publishMessage($payload);
-  
-              $payloadTest1 = json_encode($payloadTest1);
-              $this->messageBroker->publishMessage($payloadTest1);
-              $payloadTest2 = json_encode($payloadTest2);
-              $this->messageBroker->publishMessage($payloadTest2);
-  
+
               $publishCount++;
             }
           }
