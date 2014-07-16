@@ -60,66 +60,82 @@ class MBP_UserDigest
       $results = $returned->results;
 
       foreach($results as $resultCount => $result) {
-
-        if (!isset($result->first_name) ||  $result->first_name == '') {
-          $result->first_name = self::DEFAULT_FIRST_NAME;
-        }
-        $campaigns = array();
-        foreach ($result->campaigns as $campaignCount => $campaign) {
-          if (isset($campaign->nid)) {
-            $campaigns[$campaignCount] = array(
-              'nid' => $campaign->nid
-            );
-          }
-          else {
-            echo("<br />Missing campaign activity nid!<br />");
-            echo('<pre>');
-            print_r($result);
-            echo('</pre>');
-          }
-
-          if (isset($campaign->signup)) {
-            $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
-          }
-          if (isset($campaign->reportback)) {
-            $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
-          }
-        }
-        if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
-          $payload = array(
-            'email' => $result->email,
-            'campaigns' => $campaigns,
-            'merge_vars' => array(
-              'FNAME' => ucwords(strtolower($result->first_name)),
-            )
-          );
-          if (isset($result->drupal_uid)) {
-            $payload['drupal_uid'] = $result->drupal_uid;
-          }
-
-          if ((isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers))
-              || count($testUsers) == 0) {
-            echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
-            $payloadTest1 = $payload;
-
-            // Send duplicate messages of each test user
-            $payloadTest1['email'] = 'dlee@dosomething.org';
-            $payloadTest2 = $payload;
-            $payloadTest2['email'] = 'mlidey@dosomething.org';
-
-            $payload = json_encode($payload);
-            $this->messageBroker->publishMessage($payload);
-
-            $payloadTest1 = json_encode($payloadTest1);
-            $this->messageBroker->publishMessage($payloadTest1);
-            $payloadTest2 = json_encode($payloadTest2);
-            $this->messageBroker->publishMessage($payloadTest2);
-
-            $publishCount++;
-          }
+        
+        if (upper case) {
+          
+          // http://localhost:4722/user?email=Hbush1987@gmail.com&exactCase=1
+          $deleteUserApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/user?email=' . $result->email;
+          $ch = curl_init();
+          curl_setopt($ch, CURLOPT_URL,$deleteUserApiUrl);
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+          $result = curl_exec($ch);
+          $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+          curl_close($ch);
+          
         }
         else {
-          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+
+          if (!isset($result->first_name) ||  $result->first_name == '') {
+            $result->first_name = self::DEFAULT_FIRST_NAME;
+          }
+          $campaigns = array();
+          foreach ($result->campaigns as $campaignCount => $campaign) {
+            if (isset($campaign->nid)) {
+              $campaigns[$campaignCount] = array(
+                'nid' => $campaign->nid
+              );
+            }
+            else {
+              echo("<br />Missing campaign activity nid!<br />");
+              echo('<pre>');
+              print_r($result);
+              echo('</pre>');
+            }
+  
+            if (isset($campaign->signup)) {
+              $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+            }
+            if (isset($campaign->reportback)) {
+              $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+            }
+          }
+          if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
+            $payload = array(
+              'email' => $result->email,
+              'campaigns' => $campaigns,
+              'merge_vars' => array(
+                'FNAME' => ucwords(strtolower($result->first_name)),
+              )
+            );
+            if (isset($result->drupal_uid)) {
+              $payload['drupal_uid'] = $result->drupal_uid;
+            }
+  
+            if ((isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers))
+                || count($testUsers) == 0) {
+              echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+              $payloadTest1 = $payload;
+  
+              // Send duplicate messages of each test user
+              $payloadTest1['email'] = 'dlee@dosomething.org';
+              $payloadTest2 = $payload;
+              $payloadTest2['email'] = 'mlidey@dosomething.org';
+  
+              $payload = json_encode($payload);
+              $this->messageBroker->publishMessage($payload);
+  
+              $payloadTest1 = json_encode($payloadTest1);
+              $this->messageBroker->publishMessage($payloadTest1);
+              $payloadTest2 = json_encode($payloadTest2);
+              $this->messageBroker->publishMessage($payloadTest2);
+  
+              $publishCount++;
+            }
+          }
+          else {
+            echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+          }
+          
         }
       }
       $pageCount++;
