@@ -62,8 +62,6 @@ class MBP_UserDigest
       foreach($results as $resultCount => $result) {
 
         if (preg_match('/[A-Z]/', $result->email)) {
-
-          // http://localhost:4722/user?email=Hbush1987@gmail.com&exactCase=1
           $deleteUserApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/user?email=' . $result->email . '&exactCase=1';
           $ch = curl_init();
           curl_setopt($ch, CURLOPT_URL,$deleteUserApiUrl);
@@ -71,9 +69,8 @@ class MBP_UserDigest
           $cURLResult = curl_exec($ch);
           $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
           curl_close($ch);
-
+          
           echo '** mbp-user-digest->produceUserDigestQueue ' . $result->email . ' REMOVED from mb-user database. **', "\n<br />";
-
         }
         else {
 
