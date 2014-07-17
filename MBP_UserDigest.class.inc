@@ -61,31 +61,31 @@ class MBP_UserDigest
 
       foreach($results as $resultCount => $result) {
 
-        if (!isset($result->first_name) ||  $result->first_name == '') {
-          $result->first_name = self::DEFAULT_FIRST_NAME;
-        }
-        $campaigns = array();
-        foreach ($result->campaigns as $campaignCount => $campaign) {
-          if (isset($campaign->nid)) {
-            $campaigns[$campaignCount] = array(
-              'nid' => $campaign->nid
-            );
+        if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
+
+          if (!isset($result->first_name) ||  $result->first_name == '') {
+            $result->first_name = self::DEFAULT_FIRST_NAME;
           }
-          else {
-            echo("<br />Missing campaign activity nid!<br />");
-            echo('<pre>');
-            print_r($result);
-            echo('</pre>');
+          $campaigns = array();
+          foreach ($result->campaigns as $campaignCount => $campaign) {
+            if (isset($campaign->nid)) {
+              $campaigns[$campaignCount] = array(
+                'nid' => $campaign->nid
+              );
+            }
+            else {
+              echo("<br />Missing campaign activity nid!<br />");
+              echo('<pre>' . print_r($result, TRUE) . '</pre>');
+            }
+
+            if (isset($campaign->signup)) {
+              $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+            }
+            if (isset($campaign->reportback)) {
+              $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+            }
           }
 
-          if (isset($campaign->signup)) {
-            $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
-          }
-          if (isset($campaign->reportback)) {
-            $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
-          }
-        }
-        if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
           $payload = array(
             'email' => $result->email,
             'campaigns' => $campaigns,
@@ -97,24 +97,11 @@ class MBP_UserDigest
             $payload['drupal_uid'] = $result->drupal_uid;
           }
 
-          if ((isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers))
+          if ((isset($testUsers) && in_array($payload['email'], $testUsers))
               || count($testUsers) == 0) {
             echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
-            $payloadTest1 = $payload;
-
-            // Send duplicate messages of each test user
-            $payloadTest1['email'] = 'dlee@dosomething.org';
-            $payloadTest2 = $payload;
-            $payloadTest2['email'] = 'mlidey@dosomething.org';
-
             $payload = json_encode($payload);
             $this->messageBroker->publishMessage($payload);
-
-            $payloadTest1 = json_encode($payloadTest1);
-            $this->messageBroker->publishMessage($payloadTest1);
-            $payloadTest2 = json_encode($payloadTest2);
-            $this->messageBroker->publishMessage($payloadTest2);
-
             $publishCount++;
           }
         }
@@ -156,6 +143,21 @@ class MBP_UserDigest
       'qualityassuranceqa@aol.com',
       'qualityassuranceqa@hotmail.com',
       'apatheticslacker@gmail.com',
+    );
+
+    // Developers
+    $testUsers = array(
+      'dlorenzo@dosomething.org',
+      'mholford@dosomething.org',
+      'dfurnes@dosomething.org',
+      'mrich@dosomething.org',
+      'jcusano@dosomething.org',
+      'joshcusano@gmail.com',
+      'qaasst@dosomething.org',
+      'agaither@dosomething.org',
+      'barry@dosomething.org',
+      'bclark@dosomething.org',
+      'developerasst1@dosomething.org',
     );
 
     return $testUsers;
