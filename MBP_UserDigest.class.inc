@@ -160,6 +160,65 @@ class MBP_UserDigest
       'developerasst1@dosomething.org',
     );
 
+    // Dev team
+    $testUsers = array(
+      'dlee@dosomething.org',
+      'mlidey@dosomething.org',
+      'dlee+update-test01@dosomething.org',
+    );
+
+    // All Staff
+    $testUsers = array(
+      'aberneking@dosomething.org',
+      'aschachter@dosomething.org',
+      'abologno@dosomething.org',
+      'aruderman@dosomething.org',
+      'agaither@dosomething.org',
+      'awright@dosomething.org',
+      'afinger@dosomething.org',
+      'bclark@dosomething.org',
+      'bgreenberg@dosomething.org',
+      'bkassoy@dosomething.org',
+      'bmathias@dosomething.org',
+      'cstowell@dosomething.org',
+      'clyons@dosomething.org',
+      'clee@dosomething.org',
+      'charbur@dosomething.org',
+      'cwormsley@dosomething.org',
+      'cbell@dosomething.org',
+      'dmastropaolo@dosomething.org',
+      'ddeluca@dosomething.org',
+      'dfurnes@dosomething.org',
+      'dlorenzo@dosomething.org',
+      'gboundin@dosomething.org',
+      'hgridley@dosomething.org',
+      'jbladt@dosomething.org',
+      'juy@dosomething.org',
+      'cusano@dosomething.org',
+      'jlorch@dosomething.org',
+      'kradford@dosomething.org',
+      'kwagner@dosomething.org',
+      'kortiz@dosomething.org',
+      'kgoff@dosomething.org',
+      'eeddy@dosomething.org',
+      'lpatton@dosomething.org',
+      'mlidey@dosomething.org',
+      'mholford@dosomething.org',
+      'mnelson@dosomething.org',
+      'mfantini@dosomething.org',
+      'mrich@dosomething.org',
+      'mpanjwani@dosomething.org',
+      'nmody@dosomething.org',
+      'nlublin@dosomething.org',
+      'nhirabayashi@dosomething.org',
+      'rkaushal@dosomething.org',
+      'spipergoldberg@dosomething.org',
+      'edivine@tmiagency.org',
+      'gperlstein@tmiagency.org',
+      'gthomas@tmiagency.org',
+      'lboyd@tmiagency.org'
+    );
+
     return $testUsers;
   }
 
