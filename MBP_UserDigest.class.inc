@@ -48,9 +48,10 @@ class MBP_UserDigest
 
     $publishCount = 0;
     $pageCount = 1;
+    $baseUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT');
     do {
 
-      $userApiUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT') . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
+      $userApiUrl = $baseUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $ch = curl_init();
       curl_setopt($ch, CURLOPT_URL, $userApiUrl);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -61,53 +62,74 @@ class MBP_UserDigest
 
       foreach($results as $resultCount => $result) {
 
-        if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
-
-          if (!isset($result->first_name) ||  $result->first_name == '') {
-            $result->first_name = self::DEFAULT_FIRST_NAME;
-          }
-          $campaigns = array();
-          foreach ($result->campaigns as $campaignCount => $campaign) {
-            if (isset($campaign->nid)) {
-              $campaigns[$campaignCount] = array(
-                'nid' => $campaign->nid
-              );
-            }
-            else {
-              echo("<br />Missing campaign activity nid!<br />");
-              echo('<pre>' . print_r($result, TRUE) . '</pre>');
-            }
-
-            if (isset($campaign->signup)) {
-              $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
-            }
-            if (isset($campaign->reportback)) {
-              $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
-            }
-          }
-
-          $payload = array(
-            'email' => $result->email,
-            'campaigns' => $campaigns,
-            'merge_vars' => array(
-              'FNAME' => ucwords(strtolower($result->first_name)),
-            )
-          );
-          if (isset($result->drupal_uid)) {
-            $payload['drupal_uid'] = $result->drupal_uid;
-          }
-
-          if ((isset($testUsers) && in_array($payload['email'], $testUsers))
-              || count($testUsers) == 0) {
-            echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
-            $payload = json_encode($payload);
-            $this->messageBroker->publishMessage($payload);
-            $publishCount++;
-          }
+        // Remove user entries that have a mixed case email. These are duplicates from a resolved bug. The mb-user-api ensures and
+        // new and updated documents have lower case email values.
+        if (preg_match('/[A-Z]/', $result->email)) {
+          $deleteUserApiUrl = $baseUrl . '/user?email=' . $result->email . '&exactCase=1';
+          $ch = curl_init();
+          curl_setopt($ch, CURLOPT_URL,$deleteUserApiUrl);
+          curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
+          $cURLResult = curl_exec($ch);
+          curl_close($ch);
+          
+          echo '** mbp-user-digest->produceUserDigestQueue ' . $result->email . ' REMOVED from mb-user database. **', "\n<br />";
         }
         else {
-          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+
+          if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
+  
+            if (!isset($result->first_name) ||  $result->first_name == '') {
+              $result->first_name = self::DEFAULT_FIRST_NAME;
+            }
+            $campaigns = array();
+            foreach ($result->campaigns as $campaignCount => $campaign) {
+              if (isset($campaign->nid)) {
+                $campaigns[$campaignCount] = array(
+                  'nid' => $campaign->nid
+                );
+                if (isset($campaign->signup)) {
+                  $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+                }
+                if (isset($campaign->reportback)) {
+                  $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+                }
+              }
+              else {
+                echo("<br />Missing campaign activity nid!<br />");
+                echo('<pre>' . print_r($result, TRUE) . '</pre>');
+              }
+  
+              $payload = array(
+                'email' => $result->email,
+                'campaigns' => $campaigns,
+                'merge_vars' => array(
+                  'FNAME' => ucwords(strtolower($result->first_name)),
+                )
+              );
+              if (isset($result->drupal_uid)) {
+                $payload['drupal_uid'] = $result->drupal_uid;
+              }
+
+              // If specific test users are defined only create queue entries
+              // for those users
+              if ( (isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers)) ||
+                   (count($testUsers) == 0) ) {
+                echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+    
+                $payload = json_encode($payload);
+                $this->messageBroker->publishMessage($payload);
+  
+                $publishCount++;
+              }
+            }
+
+          }
+          else {
+            echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+          }
+          
         }
+
       }
       $pageCount++;
 
