@@ -55,7 +55,6 @@ echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', "
 $mbpUserDigest = new MBP_UserDigest($credentials, $config, $settings);
 
 $targetUsers = NULL;
-// $argv[1] = 'random_users.csv';
 
 // Collect targetCSV / targetUsers parameters
 $targetCSV = NULL;
