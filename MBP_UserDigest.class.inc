@@ -181,7 +181,7 @@ class MBP_UserDigest
         }
       }
       else {
-      echo 'Target CSV file empty.', "\n";
+        echo 'Target CSV file empty.', "\n";
       }
 
     }

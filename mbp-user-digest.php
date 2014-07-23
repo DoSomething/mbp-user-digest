@@ -60,7 +60,8 @@ $targetUsers = NULL;
 $targetCSV = NULL;
 if ((isset($_GET['targetUsers']) && $_GET['targetUsers'] == 'testUsers') || (isset($argv[1]) && $argv[1] == 'testUsers')) {
   $targetUsers = $mbpUserDigest->produceTestUserGroupDigestQueue();
-} elseif (isset($_GET['targetUsers'])) {
+}
+elseif (isset($_GET['targetUsers'])) {
   $targetUsers = $mbpUserDigest->produceUserGroupFromCSV($_GET['targetUsers']);
 }
 elseif (isset($argv[1])) {
