@@ -46,6 +46,9 @@ class MBP_UserDigest
 
     echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
 
+    $testUserCount = count($testUsers);
+    $deleteCount = 0;
+    $mobileCount = 0;
     $publishCount = 0;
     $pageCount = 1;
     $baseUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT');
@@ -71,34 +74,42 @@ class MBP_UserDigest
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
           $cURLResult = curl_exec($ch);
           curl_close($ch);
-          
+
           echo '** mbp-user-digest->produceUserDigestQueue ' . $result->email . ' REMOVED from mb-user database. **', "\n<br />";
+          $deleteCount++;
         }
         else {
 
           if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
+
+            // If specific test users are defined only create queue entries
+            // for those users
+
+            if ( (isset($testUsers) && $testUserCount > 0 && in_array($result->email, $testUsers)) ||
+                 ($testUserCount == 0) ) {
   
-            if (!isset($result->first_name) ||  $result->first_name == '') {
-              $result->first_name = self::DEFAULT_FIRST_NAME;
-            }
-            $campaigns = array();
-            foreach ($result->campaigns as $campaignCount => $campaign) {
-              if (isset($campaign->nid)) {
-                $campaigns[$campaignCount] = array(
-                  'nid' => $campaign->nid
-                );
-                if (isset($campaign->signup)) {
-                  $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+              if (!isset($result->first_name) ||  $result->first_name == '') {
+                $result->first_name = self::DEFAULT_FIRST_NAME;
+              }
+              $campaigns = array();
+              foreach ($result->campaigns as $campaignCount => $campaign) {
+                if (isset($campaign->nid)) {
+                  $campaigns[$campaignCount] = array(
+                    'nid' => $campaign->nid
+                  );
+                  if (isset($campaign->signup)) {
+                    $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+                  }
+                  if (isset($campaign->reportback)) {
+                    $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+                  }
                 }
-                if (isset($campaign->reportback)) {
-                  $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+                else {
+                  echo("<br />Missing campaign activity nid!<br />");
+                  echo('<pre>' . print_r($result, TRUE) . '</pre>');
                 }
               }
-              else {
-                echo("<br />Missing campaign activity nid!<br />");
-                echo('<pre>' . print_r($result, TRUE) . '</pre>');
-              }
-  
+
               $payload = array(
                 'email' => $result->email,
                 'campaigns' => $campaigns,
@@ -110,27 +121,25 @@ class MBP_UserDigest
                 $payload['drupal_uid'] = $result->drupal_uid;
               }
 
-              // If specific test users are defined only create queue entries
-              // for those users
-              if ( (isset($testUsers) && count($testUsers) > 0 && in_array($payload['email'], $testUsers)) ||
-                   (count($testUsers) == 0) ) {
-                echo '------- mbp-user-digest->produceUserDigestQueue Message SENT: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
-    
-                $payload = json_encode($payload);
-                $this->messageBroker->publishMessage($payload);
-  
-                $publishCount++;
-              }
+              echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+
+              $payload = json_encode($payload);
+              $this->messageBroker->publishMessage($payload);
+
+              $publishCount++;
+
             }
 
           }
           else {
             echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+            $mobileCount++;
           }
-          
+
         }
 
       }
+
       $pageCount++;
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
@@ -138,7 +147,49 @@ class MBP_UserDigest
     $this->statHat->addStatName('produceUserDigestQueue');
     $this->statHat->reportCount($publishCount);
 
-    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+    $total = $publishCount + $mobileCount +  $deleteCount;
+    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+  }
+
+  /**
+   * Import target test users from CSV file
+   *
+   * @param string $targetCSVFile
+   *   The filename for the CSV file to import that contains target email
+   *   address.
+   */
+  public function produceUserGroupFromCSV($targetCSVFile = NULL) {
+
+    $testUsers = array();
+
+    // Open CSV file
+    if ($targetCSVFile != NULL) {
+
+      $targetCSVFile = __DIR__ . '/' . $targetCSVFile;
+      $targetUsers = file($targetCSVFile);
+      $targetUsers = explode("\r", $targetUsers[0]);
+      $count = 0;
+
+      if ($targetUsers != FALSE) {
+        foreach ($targetUsers as $userCount => $targetUser) {
+          if ($userCount > 0) {
+            $userData = explode(',', $targetUser);
+            if ($userData[1] != '') {
+              $testUsers[] = strtolower($userData[1]);
+            }
+          }
+        }
+      }
+      else {
+        echo 'Target CSV file empty.', "\n";
+      }
+
+    }
+    else {
+      echo 'Target CSV file not set.', "\n";
+    }
+
+    return $testUsers;
   }
   
   /**
@@ -187,58 +238,6 @@ class MBP_UserDigest
       'dlee@dosomething.org',
       'mlidey@dosomething.org',
       'dlee+update-test01@dosomething.org',
-    );
-
-    // All Staff
-    $testUsers = array(
-      'aberneking@dosomething.org',
-      'aschachter@dosomething.org',
-      'abologno@dosomething.org',
-      'aruderman@dosomething.org',
-      'agaither@dosomething.org',
-      'awright@dosomething.org',
-      'afinger@dosomething.org',
-      'bclark@dosomething.org',
-      'bgreenberg@dosomething.org',
-      'bkassoy@dosomething.org',
-      'bmathias@dosomething.org',
-      'cstowell@dosomething.org',
-      'clyons@dosomething.org',
-      'clee@dosomething.org',
-      'charbur@dosomething.org',
-      'cwormsley@dosomething.org',
-      'cbell@dosomething.org',
-      'dmastropaolo@dosomething.org',
-      'ddeluca@dosomething.org',
-      'dfurnes@dosomething.org',
-      'dlorenzo@dosomething.org',
-      'gboundin@dosomething.org',
-      'hgridley@dosomething.org',
-      'jbladt@dosomething.org',
-      'juy@dosomething.org',
-      'cusano@dosomething.org',
-      'jlorch@dosomething.org',
-      'kradford@dosomething.org',
-      'kwagner@dosomething.org',
-      'kortiz@dosomething.org',
-      'kgoff@dosomething.org',
-      'eeddy@dosomething.org',
-      'lpatton@dosomething.org',
-      'mlidey@dosomething.org',
-      'mholford@dosomething.org',
-      'mnelson@dosomething.org',
-      'mfantini@dosomething.org',
-      'mrich@dosomething.org',
-      'mpanjwani@dosomething.org',
-      'nmody@dosomething.org',
-      'nlublin@dosomething.org',
-      'nhirabayashi@dosomething.org',
-      'rkaushal@dosomething.org',
-      'spipergoldberg@dosomething.org',
-      'edivine@tmiagency.org',
-      'gperlstein@tmiagency.org',
-      'gthomas@tmiagency.org',
-      'lboyd@tmiagency.org'
     );
 
     return $testUsers;

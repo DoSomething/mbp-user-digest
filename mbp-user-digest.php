@@ -48,15 +48,27 @@ $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
 );
 
+
 echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
 
 // Kick off
 $mbpUserDigest = new MBP_UserDigest($credentials, $config, $settings);
 
-// Create test entries
-$testUsers = $mbpUserDigest->produceTestUserGroupDigestQueue();
+$targetUsers = NULL;
+
+// Collect targetCSV / targetUsers parameters
+$targetCSV = NULL;
+if ((isset($_GET['targetUsers']) && $_GET['targetUsers'] == 'testUsers') || (isset($argv[1]) && $argv[1] == 'testUsers')) {
+  $targetUsers = $mbpUserDigest->produceTestUserGroupDigestQueue();
+}
+elseif (isset($_GET['targetUsers'])) {
+  $targetUsers = $mbpUserDigest->produceUserGroupFromCSV($_GET['targetUsers']);
+}
+elseif (isset($argv[1])) {
+  $targetUsers = $mbpUserDigest->produceUserGroupFromCSV($argv[1]);
+}
 
 // Gather digest message mailing list
-$mbpUserDigest->produceUserDigestQueue($testUsers);
+$mbpUserDigest->produceUserDigestQueue($targetUsers);
 
 echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', "\n";
