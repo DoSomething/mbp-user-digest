@@ -196,7 +196,7 @@ class MBP_UserDigest
    * Test groups
    */
   public function produceTestUserGroupDigestQueue() {
-
+/*
     $testUsers = array(
       'cstowell@dosomething.org',
       'kradford@dosomething.org',
@@ -232,11 +232,11 @@ class MBP_UserDigest
       'bclark@dosomething.org',
       'developerasst1@dosomething.org',
     );
-
+*/
     // Dev team
     $testUsers = array(
       'dlee@dosomething.org',
-      'mlidey@dosomething.org',
+//      'mlidey@dosomething.org',
       'dlee+update-test01@dosomething.org',
     );
 

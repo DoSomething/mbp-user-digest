@@ -68,7 +68,12 @@ elseif (isset($argv[1])) {
   $targetUsers = $mbpUserDigest->produceUserGroupFromCSV($argv[1]);
 }
 
-// Gather digest message mailing list
-$mbpUserDigest->produceUserDigestQueue($targetUsers);
+if ($targetUsers != NULL) {
+  // Gather digest message mailing list
+  $mbpUserDigest->produceUserDigestQueue($targetUsers);
+}
+else {
+  echo 'targerUser not defined.' . "\n";
+}
 
 echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', "\n";
