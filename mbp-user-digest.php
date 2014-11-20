@@ -12,10 +12,10 @@ require_once __DIR__ . '/vendor/autoload.php';
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-require __DIR__ . '/mb-secure-config.inc';
-require __DIR__ . '/mb-config.inc';
+require_once __DIR__ . '/mb-secure-config.inc';
+require_once __DIR__ . '/mb-config.inc';
 
-require __DIR__ . '/MBP_UserDigest.class.inc';
+require_once __DIR__ . '/MBP_UserDigest.class.inc';
 
 // Settings
 $credentials = array(
@@ -49,7 +49,7 @@ $settings = array(
 );
 
 
-echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', "\n";
+echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 // Kick off
 $mbpUserDigest = new MBP_UserDigest($credentials, $config, $settings);
@@ -71,4 +71,4 @@ elseif (isset($argv[1])) {
 // Gather digest message mailing list
 $mbpUserDigest->produceUserDigestQueue($targetUsers);
 
-echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', "\n";
+echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
