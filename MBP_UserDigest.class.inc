@@ -44,7 +44,7 @@ class MBP_UserDigest
    */
   public function produceUserDigestQueue($testUsers = array()) {
 
-    echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+    echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
     $testUserCount = count($testUsers);
     $deleteCount = 0;
@@ -75,7 +75,7 @@ class MBP_UserDigest
           $cURLResult = curl_exec($ch);
           curl_close($ch);
 
-          echo '** mbp-user-digest->produceUserDigestQueue ' . $result->email . ' REMOVED from mb-user database. **', "\n<br />";
+          echo '** mbp-user-digest->produceUserDigestQueue ' . $result->email . ' REMOVED from mb-user database. **', PHP_EOL;
           $deleteCount++;
         }
         else {
@@ -105,7 +105,7 @@ class MBP_UserDigest
                   }
                 }
                 else {
-                  echo("<br />Missing campaign activity nid!<br />");
+                  echo 'Missing campaign activity nid!', PHP_EOL;
                   echo('<pre>' . print_r($result, TRUE) . '</pre>');
                 }
               }
@@ -121,7 +121,7 @@ class MBP_UserDigest
                 $payload['drupal_uid'] = $result->drupal_uid;
               }
 
-              echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+              echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
               $payload = json_encode($payload);
               $this->messageBroker->publishMessage($payload);
@@ -132,7 +132,7 @@ class MBP_UserDigest
 
           }
           else {
-            echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+            echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
             $mobileCount++;
           }
 
@@ -181,12 +181,12 @@ class MBP_UserDigest
         }
       }
       else {
-        echo 'Target CSV file empty.', "\n";
+        echo 'Target CSV file empty.', PHP_EOL;
       }
 
     }
     else {
-      echo 'Target CSV file not set.', "\n";
+      echo 'Target CSV file not set.', PHP_EOL;
     }
 
     return $testUsers;
