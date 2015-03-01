@@ -64,7 +64,7 @@ class MBP_UserDigest
     do {
 
       $userApiUrl = $baseUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
-      $results = $this->$toolbox->curlGET($userApiUrl);
+      $results = $this->toolbox->curlGET($userApiUrl);
 
       foreach($results as $resultCount => $result) {
 
