@@ -14,6 +14,13 @@ class MBP_UserDigest
   private $messageBroker;
 
   /**
+   * Collection of helper methods
+   *
+   * @var object
+   */
+  private $toolbox;
+
+  /**
    * Setting from external services - Mailchimp.
    *
    * @var array
@@ -35,6 +42,8 @@ class MBP_UserDigest
   public function __construct($credentials, $config, $settings) {
     $this->messageBroker = new MessageBroker($credentials, $config);
 
+    $this->toolbox = new MB_Toolbox($settings);
+
     $this->statHat = new StatHat($settings['stathat_ez_key'], 'mbp-user-digest:');
     $this->statHat->setIsProduction(FALSE);
   }
@@ -55,13 +64,7 @@ class MBP_UserDigest
     do {
 
       $userApiUrl = $baseUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_URL, $userApiUrl);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-      $jsonResult = curl_exec($ch);
-      curl_close($ch);
-      $returned = json_decode($jsonResult);
-      $results = $returned->results;
+      $results = $this->$toolbox->curlGET($userApiUrl);
 
       foreach($results as $resultCount => $result) {
 
