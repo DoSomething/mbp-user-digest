@@ -86,7 +86,7 @@ class MBP_UserDigest
         // Remove user entries that have a mixed case email. These are duplicates from a resolved bug. The mb-user-api ensures and
         // new and updated documents have lower case email values.
         if (preg_match('/[A-Z]/', $result->email)) {
-          $deleteUserApiUrl = $baseUrl . '/user?email=' . $result->email . '&exactCase=1';
+          $deleteUserApiUrl = $curlUrl . '/user?email=' . $result->email . '&exactCase=1';
           $ch = curl_init();
           curl_setopt($ch, CURLOPT_URL,$deleteUserApiUrl);
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
