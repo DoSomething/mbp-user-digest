@@ -9,9 +9,23 @@ class MBP_UserDigest
   const PAGE_SIZE = 500;
 
   /**
+   * Setting from external services - Mailchimp.
+   *
+   * @var array
+   */
+  private $settings;
+
+  /**
    * Message Broker connection to RabbitMQ
    */
   private $messageBroker;
+
+  /**
+   * Collection of helper methods
+   *
+   * @var object
+   */
+  private $toolbox;
 
   /**
    * Setting from external services - Mailchimp.
@@ -33,7 +47,10 @@ class MBP_UserDigest
    *  Additional configuration environment settings
    */
   public function __construct($credentials, $config, $settings) {
+    $this->settings = $settings;
     $this->messageBroker = new MessageBroker($credentials, $config);
+
+    $this->toolbox = new MB_Toolbox($settings);
 
     $this->statHat = new StatHat($settings['stathat_ez_key'], 'mbp-user-digest:');
     $this->statHat->setIsProduction(FALSE);
@@ -51,17 +68,11 @@ class MBP_UserDigest
     $mobileCount = 0;
     $publishCount = 0;
     $pageCount = 1;
-    $baseUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT');
+    $baseUrl = $this->settings['ds_user_api_host'] . ':' . $this->settings['ds_user_api_p'];
     do {
 
       $userApiUrl = $baseUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
-      $ch = curl_init();
-      curl_setopt($ch, CURLOPT_URL, $userApiUrl);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-      $jsonResult = curl_exec($ch);
-      curl_close($ch);
-      $returned = json_decode($jsonResult);
-      $results = $returned->results;
+      $results = $this->toolbox->curlGET($userApiUrl);
 
       foreach($results as $resultCount => $result) {
 
@@ -80,7 +91,8 @@ class MBP_UserDigest
         }
         else {
 
-          if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
+          // Only process non "@mobile" addresses
+          if (isset($result->email) && (strpos($result->email, '@mobile') === FALSE || strlen(substr($result->email, strpos($result->email, '@mobile'))) > 7)) {
 
             // If specific test users are defined only create queue entries
             // for those users
