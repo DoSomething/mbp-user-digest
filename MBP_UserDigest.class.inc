@@ -79,9 +79,9 @@ class MBP_UserDigest
     do {
 
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
-      $results = $this->toolbox->curlGET($userApiUrl);
+      $result = $this->toolbox->curlGET($userApiUrl);
 
-      foreach($results as $resultCount => $result) {
+      foreach($result->results as $resultCount => $result) {
 
         // Remove user entries that have a mixed case email. These are duplicates from a resolved bug. The mb-user-api ensures and
         // new and updated documents have lower case email values.
