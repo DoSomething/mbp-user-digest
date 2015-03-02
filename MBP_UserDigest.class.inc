@@ -9,6 +9,13 @@ class MBP_UserDigest
   const PAGE_SIZE = 500;
 
   /**
+   * Setting from external services - Mailchimp.
+   *
+   * @var array
+   */
+  private $settings;
+
+  /**
    * Message Broker connection to RabbitMQ
    */
   private $messageBroker;
@@ -40,6 +47,7 @@ class MBP_UserDigest
    *  Additional configuration environment settings
    */
   public function __construct($credentials, $config, $settings) {
+    $this->settings = $settings;
     $this->messageBroker = new MessageBroker($credentials, $config);
 
     $this->toolbox = new MB_Toolbox($settings);
@@ -60,7 +68,7 @@ class MBP_UserDigest
     $mobileCount = 0;
     $publishCount = 0;
     $pageCount = 1;
-    $baseUrl = getenv('DS_USER_API_HOST') . ':' . getenv('DS_USER_API_PORT');
+    $baseUrl = $this->settings['ds_user_api_host'] . ':' . $this->settings['ds_user_api_p'];
     do {
 
       $userApiUrl = $baseUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
@@ -83,7 +91,8 @@ class MBP_UserDigest
         }
         else {
 
-          if (isset($result->email) && strpos($result->email, '@mobile') === FALSE) {
+          // Only process non "@mobile" addresses
+          if (isset($result->email) && (strpos($result->email, '@mobile') === FALSE || strlen(substr($result->email, strpos($result->email, '@mobile'))) > 7)) {
 
             // If specific test users are defined only create queue entries
             // for those users
