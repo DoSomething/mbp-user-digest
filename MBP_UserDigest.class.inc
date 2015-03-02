@@ -69,10 +69,16 @@ class MBP_UserDigest
     $mobileCount = 0;
     $publishCount = 0;
     $pageCount = 1;
-    $baseUrl = $this->settings['ds_user_api_host'] . ':' . $this->settings['ds_user_api_p'];
+
+    $curlUrl = $this->settings['ds_user_api_host'];
+    $port = $this->settings['ds_user_api_port'];
+    if ($port != 0 && is_numeric($port)) {
+      $curlUrl .= ':' . (int) $port;
+    }
+
     do {
 
-      $userApiUrl = $baseUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
+      $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $results = $this->toolbox->curlGET($userApiUrl);
 
       foreach($results as $resultCount => $result) {
