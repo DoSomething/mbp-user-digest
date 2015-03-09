@@ -256,6 +256,7 @@ class MBP_UserDigest
     $testUsers = array(
       'dlee@dosomething.org',
       'mlidey@dosomething.org',
+      'bclark@dosomething.org',
       'dlee+update-test01@dosomething.org',
     );
 
