@@ -54,7 +54,7 @@ class MBP_UserDigest
     $this->toolbox = new MB_Toolbox($settings);
 
     $this->statHat = new StatHat($settings['stathat_ez_key'], 'mbp-user-digest:');
-    $this->statHat->setIsProduction(FALSE);
+    $this->statHat->setIsProduction(TRUE);
   }
 
   /**
