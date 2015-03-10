@@ -81,37 +81,36 @@ class MBP_UserDigest
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $result = $this->toolbox->curlGET($userApiUrl);
 
-      foreach($result->results as $resultCount => $result) {
+      foreach($result->results as $resultCount => $userApiResult) {
 
         // Remove user entries that have a mixed case email. These are duplicates from a resolved bug. The mb-user-api ensures and
         // new and updated documents have lower case email values.
-        if (preg_match('/[A-Z]/', $result->email)) {
-          $deleteUserApiUrl = $curlUrl . '/user?email=' . $result->email . '&exactCase=1';
+        if (preg_match('/[A-Z]/', $userApiResult->email)) {
+          $deleteUserApiUrl = $curlUrl . '/user?email=' . $userApiResult->email . '&exactCase=1';
           $ch = curl_init();
           curl_setopt($ch, CURLOPT_URL,$deleteUserApiUrl);
           curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "DELETE");
           $cURLResult = curl_exec($ch);
           curl_close($ch);
 
-          echo '** mbp-user-digest->produceUserDigestQueue ' . $result->email . ' REMOVED from mb-user database. **', PHP_EOL;
+          echo '** mbp-user-digest->produceUserDigestQueue ' . $userApiResult->email . ' REMOVED from mb-user database. **', PHP_EOL;
           $deleteCount++;
         }
         else {
 
           // Only process non "@mobile" addresses
-          if (isset($result->email) && (strpos($result->email, '@mobile') === FALSE || strlen(substr($result->email, strpos($result->email, '@mobile'))) > 7)) {
+          if (isset($userApiResult->email) && (strpos($userApiResult->email, '@mobile') === FALSE || strlen(substr($userApiResult->email, strpos($userApiResult->email, '@mobile'))) > 7)) {
 
             // If specific test users are defined only create queue entries
             // for those users
-
-            if ( (isset($testUsers) && $testUserCount > 0 && in_array($result->email, $testUsers)) ||
+            if ( (isset($testUsers) && $testUserCount > 0 && in_array($userApiResult->email, $testUsers)) ||
                  ($testUserCount == 0) ) {
   
-              if (!isset($result->first_name) ||  $result->first_name == '') {
-                $result->first_name = self::DEFAULT_FIRST_NAME;
+              if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
+                $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
               }
               $campaigns = array();
-              foreach ($result->campaigns as $campaignCount => $campaign) {
+              foreach ($userApiResult->campaigns as $campaignCount => $campaign) {
                 if (isset($campaign->nid)) {
                   $campaigns[$campaignCount] = array(
                     'nid' => $campaign->nid
@@ -125,19 +124,19 @@ class MBP_UserDigest
                 }
                 else {
                   echo 'Missing campaign activity nid!', PHP_EOL;
-                  echo('<pre>' . print_r($result, TRUE) . '</pre>');
+                  echo('<pre>' . print_r($userApiResult, TRUE) . '</pre>');
                 }
               }
 
               $payload = array(
-                'email' => $result->email,
+                'email' => $userApiResult->email,
                 'campaigns' => $campaigns,
                 'merge_vars' => array(
-                  'FNAME' => ucwords(strtolower($result->first_name)),
+                  'FNAME' => ucwords(strtolower($userApiResult->first_name)),
                 )
               );
-              if (isset($result->drupal_uid)) {
-                $payload['drupal_uid'] = $result->drupal_uid;
+              if (isset($userApiResult->drupal_uid)) {
+                $payload['drupal_uid'] = $userApiResult->drupal_uid;
               }
 
               echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
@@ -151,7 +150,7 @@ class MBP_UserDigest
 
           }
           else {
-            echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($result, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+            echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($userApiResult, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
             $mobileCount++;
           }
 
