@@ -257,6 +257,11 @@ class MBP_UserDigest
       'mlidey@dosomething.org',
       'bclark@dosomething.org',
       'dlee+update-test01@dosomething.org',
+      'qaasst@dosomething.org',
+      'joe@dosomething.org',
+      'mfantini@dosomething.org',
+      'lpatton@dosomething.org',
+      'nmody@dosomething.org',
     );
 
     return $testUsers;
