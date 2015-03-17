@@ -258,6 +258,7 @@ class MBP_UserDigest
       'bclark@dosomething.org',
       'dlee+update-test01@dosomething.org',
       'apatheticslacker@gmail.com',
+      'jvicente@nyit.edu',
       'joe@dosomething.org',
       'mfantini@dosomething.org',
       'lpatton@dosomething.org',
