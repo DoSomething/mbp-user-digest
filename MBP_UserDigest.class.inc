@@ -96,6 +96,8 @@ class MBP_UserDigest
           if ($cURLGetResult) {
             $deleteUserApiUrl = $curlUrl . '/user?email=' . urlencode($userApiResult->email) . '&exactCase=1';
             $cURLDeleteResult = $this->toolbox->curlDELETE($deleteUserApiUrl);
+            
+            $this->statHat->addStatName('produceUserDigestQueue - email case ERROR - REMOVED from mb-user database');
             echo '** mbp-user-digest->produceUserDigestQueue ' . $userApiResult->email . ' REMOVED from mb-user database. **', PHP_EOL;
             $deleteCount++;
           }
@@ -105,6 +107,8 @@ class MBP_UserDigest
             );
             $updateUserApiUrl = $curlUrl . '/user?email=' . $userApiResult->email;
             $cURLPostResult = $this->toolbox->curlPOST($updateUserApiUrl, $post);
+
+            $this->statHat->addStatName('produceUserDigestQueue - email case ERROR - UPDATED mb-user database with lowercase email');
             echo '** mbp-user-digest->produceUserDigestQueue ' . $userApiResult->email . ' UPDATED mb-user database with lowercase email. **', PHP_EOL;
           }
 
@@ -120,6 +124,7 @@ class MBP_UserDigest
 
             if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
               $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
+              $this->statHat->addStatName('produceUserDigestQueue - DEFAULT_FIRST_NAME used');
             }
             $campaigns = array();
             foreach ($userApiResult->campaigns as $campaignCount => $campaign) {
@@ -156,15 +161,19 @@ class MBP_UserDigest
             $payload = json_encode($payload);
             $this->messageBroker->publishMessage($payload);
 
+            $this->statHat->addStatName('produceUserDigestQueue - queued digest');
             $publishCount++;
-
           }
 
         }
         else {
+          $this->statHat->addStatName('produceUserDigestQueue - @mobile number skipped');
           echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($userApiResult, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
           $mobileCount++;
         }
+
+        $this->statHat->reportCount(1);
+        $this->statHat->clearAddedStatNames();
 
       }
 
