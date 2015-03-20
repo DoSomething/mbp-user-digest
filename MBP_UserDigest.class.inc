@@ -62,7 +62,7 @@ class MBP_UserDigest
    */
   public function produceUserDigestQueue($testUsers = array()) {
 
-    echo '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+    echo PHP_EOL . '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL . PHP_EOL;
 
     $testUserCount = count($testUsers);
     $deleteCount = 0;
@@ -81,42 +81,12 @@ class MBP_UserDigest
     do {
 
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
+      echo '->produceUserDigestQueue curlGET: ' . $userApiUrl . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
       $result = $this->toolbox->curlGET($userApiUrl);
       $fetched += count($result->results);
       echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result->results) . ', fetched: ' . $fetched . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
       foreach($result->results as $resultCount => $userApiResult) {
-
-        // Remove user entries that have a mixed case email. These are
-        // duplicates from a resolved bug. The mb-user-api ensures that new and
-        // updated documents have lower case email values.
-        if (preg_match('/[A-Z]/', $userApiResult->email)) {
-
-          // Look for lower case version
-          $lookupUserApiUrl = $curlUrl . '/user?email=' . urlencode(strtolower($userApiResult->email));
-          $cURLGetResult = $this->toolbox->curlGET($lookupUserApiUrl);
-
-          // if found, delete mixed case version
-          if ($cURLGetResult) {
-            $deleteUserApiUrl = $curlUrl . '/user?email=' . urlencode($userApiResult->email) . '&exactCase=1';
-            $cURLDeleteResult = $this->toolbox->curlDELETE($deleteUserApiUrl);
-            
-            $this->statHat->addStatName('produceUserDigestQueue - email mixed case ERROR - REMOVED from mb-user database');
-            echo '** mbp-user-digest->produceUserDigestQueue ' . $userApiResult->email . ' REMOVED from mb-user database due to mixed case duplicate entry. **', PHP_EOL;
-            $deleteCount++;
-          }
-          else {
-            $post = array(
-              'email' => strtolower($userApiResult->email)
-            );
-            $updateUserApiUrl = $curlUrl . '/user?email=' . $userApiResult->email;
-            $cURLPostResult = $this->toolbox->curlPOST($updateUserApiUrl, $post);
-
-            $this->statHat->addStatName('produceUserDigestQueue - email mixed case ERROR - UPDATED mb-user database with lowercase email');
-            echo '** mbp-user-digest->produceUserDigestQueue ' . $userApiResult->email . ' UPDATED mb-user database with lowercase email to prevent duplicate entry.. **', PHP_EOL;
-          }
-
-        }
 
         // Only process non "@mobile" addresses
         if (isset($userApiResult->email) && (strpos($userApiResult->email, '@mobile') === FALSE || strlen(substr($userApiResult->email, strpos($userApiResult->email, '@mobile'))) > 7)) {
@@ -195,7 +165,7 @@ class MBP_UserDigest
       echo '- ' . $deleteCount . ' deleted', PHP_EOL;
       echo '- records processed: ' . $recordsProcessed, PHP_EOL;
       echo '- Total processed: ' . ($publishCount + $mobileCount +  $deleteCount), PHP_EOL;
-      echo '---------', PHP_EOL;
+      echo PHP_EOL;
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
