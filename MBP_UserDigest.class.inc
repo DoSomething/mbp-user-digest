@@ -80,6 +80,7 @@ class MBP_UserDigest
 
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $result = $this->toolbox->curlGET($userApiUrl);
+      echo '->produceUserDigestQueue page: ' . $pageCount . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
       foreach($result->results as $resultCount => $userApiResult) {
 
@@ -183,8 +184,8 @@ class MBP_UserDigest
         $this->statHat->clearAddedStatNames();
 
       }
-
       $pageCount++;
+      echo '->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
@@ -192,7 +193,7 @@ class MBP_UserDigest
     $this->statHat->reportCount($publishCount);
 
     $total = $publishCount + $mobileCount +  $deleteCount;
-    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D M j G:i:s T Y') . ' -------', "\n<br />";
+    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
   }
 
   /**
