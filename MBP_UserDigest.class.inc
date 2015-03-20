@@ -7,7 +7,7 @@ class MBP_UserDigest
 {
 
   const DEFAULT_FIRST_NAME = "Doer";
-  const PAGE_SIZE = 500;
+  const PAGE_SIZE = 5000;
 
   /**
    * Setting from external services - Mailchimp.
@@ -68,6 +68,7 @@ class MBP_UserDigest
     $deleteCount = 0;
     $mobileCount = 0;
     $publishCount = 0;
+    $recordsProcessed = 0;
     $pageCount = 1;
 
     $curlUrl = $this->settings['ds_user_api_host'];
@@ -175,17 +176,17 @@ class MBP_UserDigest
 
         }
         else {
-          $this->statHat->addStatName('produceUserDigestQueue - @mobile number skipped');
-          echo '------- mbp-user-digest->produceUserDigestQueue ERROR - missing or @mobile email: ' . print_r($userApiResult, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+          $this->statHat->addStatName('produceUserDigestQueue - @mobile number, skipped');
           $mobileCount++;
         }
 
+        $recordsProcessed++;
         $this->statHat->reportCount(1);
         $this->statHat->clearAddedStatNames();
 
       }
       $pageCount++;
-      echo '->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo '->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped. ' . $deleteCount . ' deleted. Records processed: ' . $recordsProcessed . '. Total processed: ' . $publishCount + $mobileCount +  $deleteCount . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
