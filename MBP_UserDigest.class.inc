@@ -69,6 +69,7 @@ class MBP_UserDigest
     $mobileCount = 0;
     $publishCount = 0;
     $recordsProcessed = 0;
+    $fetched = 0;
     $pageCount = 1;
 
     $curlUrl = $this->settings['ds_user_api_host'];
@@ -81,7 +82,8 @@ class MBP_UserDigest
 
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $result = $this->toolbox->curlGET($userApiUrl);
-      echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result->results) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      $fetched += count($result->results);
+      echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result->results) . ', fetched: ' . $fetched . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
       foreach($result->results as $resultCount => $userApiResult) {
 
@@ -186,7 +188,7 @@ class MBP_UserDigest
 
       }
       $pageCount++;
-      echo '->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped. ' . $deleteCount . ' deleted. Records processed: ' . $recordsProcessed . '. Total processed: ' . $publishCount + $mobileCount +  $deleteCount . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo('->produceUserDigestQueue batch END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped. ' . $deleteCount . ' deleted. Records processed: ' . $recordsProcessed . '. Total processed: ' . $publishCount + $mobileCount +  $deleteCount . ' - ' . date('D M j G:i:s T Y') . ' -------' . PHP_EOL);
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
