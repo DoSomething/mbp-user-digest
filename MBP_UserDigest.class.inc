@@ -81,7 +81,7 @@ class MBP_UserDigest
 
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       $result = $this->toolbox->curlGET($userApiUrl);
-      echo '->produceUserDigestQueue page: ' . $pageCount . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result->results) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
       foreach($result->results as $resultCount => $userApiResult) {
 
