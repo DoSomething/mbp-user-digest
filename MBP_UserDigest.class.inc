@@ -188,7 +188,14 @@ class MBP_UserDigest
 
       }
       $pageCount++;
-      echo('->produceUserDigestQueue batch END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped. ' . $deleteCount . ' deleted. Records processed: ' . $recordsProcessed . '. Total processed: ' . $publishCount + $mobileCount +  $deleteCount . ' - ' . date('D M j G:i:s T Y') . ' -------' . PHP_EOL);
+
+      echo '->produceUserDigestQueue batch END: ' . date('D M j G:i:s T Y'), PHP_EOL;
+      echo '- ' .  $publishCount . ' queued', PHP_EOL;
+      echo '- @mobile: ' . $mobileCount . ' skipped', PHP_EOL;
+      echo '- ' . $deleteCount . ' deleted', PHP_EOL;
+      echo '- records processed: ' . $recordsProcessed, PHP_EOL;
+      echo '- Total processed: ' . ($publishCount + $mobileCount +  $deleteCount), PHP_EOL;
+      echo '---------', PHP_EOL;
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
