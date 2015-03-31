@@ -270,6 +270,9 @@ class MBP_UserDigest
       'mfantini@dosomething.org',
       'lpatton@dosomething.org',
       'nmody@dosomething.org',
+      'qualityassuranceqa@yahoo.com',
+      'qualityassuranceqa@aol.com',
+      'qualityassuranceqa@hotmail.com',
     );
 
     return $testUsers;
