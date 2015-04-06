@@ -275,6 +275,7 @@ class MBP_UserDigest
       'qualityassuranceqa@hotmail.com',
       'digestplswork@gmail.com',
       'ascottdicker@dosomething.org',
+      'mfantini+digest@dosomething.org',
     );
 
     return $testUsers;
