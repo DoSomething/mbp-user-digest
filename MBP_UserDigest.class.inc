@@ -54,7 +54,7 @@ class MBP_UserDigest
     $this->toolbox = new MB_Toolbox($settings);
 
     $this->statHat = new StatHat($settings['stathat_ez_key'], 'mbp-user-digest:');
-    $this->statHat->setIsProduction(TRUE);
+    $this->statHat->setIsProduction($this->settings['use_stathat_tracking']);
   }
 
   /**
@@ -96,52 +96,56 @@ class MBP_UserDigest
           if ( (isset($testUsers) && $testUserCount > 0 && in_array($userApiResult->email, $testUsers)) ||
                ($testUserCount == 0) ) {
 
-            // Exclude users who have unsubscribed or have been banned
+            // Exclude users who have have been banned
             if ( (!isset($userApiResult->subscriptions)) ||
-                 (isset($userApiResult->subscriptions->banned) && $userApiResult->subscriptions->banned != TRUE) ||
-                 (isset($userApiResult->subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) ) {
+                 (isset($userApiResult->subscriptions->banned) && $userApiResult->subscriptions->banned != TRUE) ) {
 
-              if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
-                $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
-                $this->statHat->addStatName('produceUserDigestQueue - DEFAULT_FIRST_NAME used');
-              }
-              $campaigns = array();
-              foreach ($userApiResult->campaigns as $campaignCount => $campaign) {
-                if (isset($campaign->nid)) {
-                  $campaigns[$campaignCount] = array(
-                    'nid' => $campaign->nid
-                  );
-                  if (isset($campaign->signup)) {
-                    $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+              // Exclude users who have unsubscribed from Digest messages
+              if (isset($userApiResult->subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) {
+
+                if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
+                  $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
+                  $this->statHat->addStatName('produceUserDigestQueue - DEFAULT_FIRST_NAME used');
+                }
+                $campaigns = array();
+                foreach ($userApiResult->campaigns as $campaignCount => $campaign) {
+                  if (isset($campaign->nid)) {
+                    $campaigns[$campaignCount] = array(
+                      'nid' => $campaign->nid
+                    );
+                    if (isset($campaign->signup)) {
+                      $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+                    }
+                    if (isset($campaign->reportback)) {
+                      $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+                    }
                   }
-                  if (isset($campaign->reportback)) {
-                    $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+                  else {
+                    echo 'Missing campaign activity nid!', PHP_EOL;
+                    echo('<pre>' . print_r($userApiResult, TRUE) . '</pre>');
                   }
                 }
-                else {
-                  echo 'Missing campaign activity nid!', PHP_EOL;
-                  echo('<pre>' . print_r($userApiResult, TRUE) . '</pre>');
+
+                $payload = array(
+                  'email' => $userApiResult->email,
+                  'campaigns' => $campaigns,
+                  'merge_vars' => array(
+                    'FNAME' => ucwords(strtolower($userApiResult->first_name)),
+                  )
+                );
+                if (isset($userApiResult->drupal_uid)) {
+                  $payload['drupal_uid'] = $userApiResult->drupal_uid;
                 }
+
+                echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: ' . print_r($payload, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+
+                $payload = json_encode($payload);
+                $this->messageBroker->publishMessage($payload);
+
+                $this->statHat->addStatName('produceUserDigestQueue - queued digest');
+                $publishCount++;
               }
 
-              $payload = array(
-                'email' => $userApiResult->email,
-                'campaigns' => $campaigns,
-                'merge_vars' => array(
-                  'FNAME' => ucwords(strtolower($userApiResult->first_name)),
-                )
-              );
-              if (isset($userApiResult->drupal_uid)) {
-                $payload['drupal_uid'] = $userApiResult->drupal_uid;
-              }
-
-              echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: <pre>' . print_r($payload, TRUE) . '</pre> - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-
-              $payload = json_encode($payload);
-              $this->messageBroker->publishMessage($payload);
-
-              $this->statHat->addStatName('produceUserDigestQueue - queued digest');
-              $publishCount++;
             }
 
           }
@@ -261,7 +265,6 @@ class MBP_UserDigest
     // Dev team
     $testUsers = array(
       'dlee@dosomething.org',
-      'mlidey@dosomething.org',
       'bclark@dosomething.org',
       'dlee+update-test01@dosomething.org',
       'apatheticslacker@gmail.com',
