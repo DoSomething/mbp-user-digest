@@ -96,12 +96,13 @@ class MBP_UserDigest
           if ( (isset($testUsers) && $testUserCount > 0 && in_array($userApiResult->email, $testUsers)) ||
                ($testUserCount == 0) ) {
 
-            // Exclude users who have have been banned
+            // Exclude users who have have been banned OR no preference has been set for banning
             if ( (!isset($userApiResult->subscriptions)) ||
                  (isset($userApiResult->subscriptions->banned) && $userApiResult->subscriptions->banned != TRUE) ) {
 
-              // Exclude users who have unsubscribed from Digest messages
-              if (isset($userApiResult->subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) {
+              // Exclude users who have unsubscribed from Digest messages OR no preference has been set of digest
+              if ( (!isset($userApiResult->subscriptions->digest)) ||
+                   (isset($userApiResult->subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) ) {
 
                 if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
                   $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
