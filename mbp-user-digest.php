@@ -9,12 +9,13 @@
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
+use DoSomething\MB_Toolbox\MB_Configuration;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
-require_once __DIR__ . '/mb-secure-config.inc';
-require_once __DIR__ . '/mb-config.inc';
-
+// Load configuration settings common to the Message Broker system
+// symlinks in the project directory point to the actual location of the files
+require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
 require_once __DIR__ . '/MBP_UserDigest.class.inc';
 
 // Settings
@@ -25,25 +26,6 @@ $credentials = array(
   'password' => getenv("RABBITMQ_PASSWORD"),
   'vhost' => getenv("RABBITMQ_VHOST"),
 );
-$config = array(
-  'exchange' => array(
-    'name' => getenv("MB_USER_DIGEST_EXCHANGE"),
-    'type' => getenv("MB_USER_DIGEST_EXCHANGE_TYPE"),
-    'passive' => getenv("MB_USER_DIGEST_EXCHANGE_PASSIVE"),
-    'durable' => getenv("MB_USER_DIGEST_EXCHANGE_DURABLE"),
-    'auto_delete' => getenv("MB_USER_DIGEST_EXCHANGE_AUTO_DELETE"),
-  ),
-  'queue' => array(
-    array(
-      'name' => getenv("MB_USER_DIGEST_QUEUE"),
-      'passive' => getenv("MB_USER_DIGEST_QUEUE_PASSIVE"),
-      'durable' => getenv("MB_USER_DIGEST_QUEUE_DURABLE"),
-      'exclusive' => getenv("MB_USER_DIGEST_QUEUE_EXCLUSIVE"),
-      'auto_delete' => getenv("MB_USER_DIGEST_QUEUE_AUTO_DELETE"),
-      'bindingKey' => getenv("MB_USER_DIGEST_QUEUE_TOPIC_MB_TRANSACTIONAL_EXCHANGE_PATTERN"),
-    ),
-  ),
-);
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
   'use_stathat_tracking' => getenv('USE_STAT_TRACKING'),
@@ -51,6 +33,31 @@ $settings = array(
   'ds_drupal_api_port' => getenv('DS_DRUPAL_API_PORT'),
   'ds_user_api_host' => getenv('DS_USER_API_HOST'),
   'ds_user_api_port' => getenv('DS_USER_API_PORT'),
+);
+
+$config = array();
+$source = __DIR__ . '/messagebroker-config/mb_config.json';
+$mb_config = new MB_Configuration($source, $settings);
+$userDigestExchange = $mb_config->exchangeSettings('directUserDigestExchange');
+
+$config = array(
+  'exchange' => array(
+    'name' => $userDigestExchange->name,
+    'type' => $userDigestExchange->type,
+    'passive' => $userDigestExchange->passive,
+    'durable' => $userDigestExchange->durable,
+    'auto_delete' => $userDigestExchange->auto_delete,
+  ),
+  'queue' => array(
+    array(
+      'name' => $userDigestExchange->queues->userDigestQueue->name,
+      'passive' => $userDigestExchange->queues->userDigestQueue->passive,
+      'durable' =>  $userDigestExchange->queues->userDigestQueue->durable,
+      'exclusive' =>  $userDigestExchange->queues->userDigestQueue->exclusive,
+      'auto_delete' =>  $userDigestExchange->queues->userDigestQueue->auto_delete,
+      'bindingKey' => $userDigestExchange->queues->userDigestQueue->binding_key,
+    ),
+  ),
 );
 
 
