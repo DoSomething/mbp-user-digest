@@ -7,6 +7,8 @@
  * queue.
  */
 
+date_default_timezone_set('America/New_York');
+
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
 use DoSomething\MB_Toolbox\MB_Configuration;
@@ -58,6 +60,7 @@ $config = array(
       'bindingKey' => $userDigestExchange->queues->userDigestQueue->binding_key,
     ),
   ),
+  'routingKey' => $userDigestExchange->queues->userDigestQueue->routing_key,
 );
 
 

@@ -62,7 +62,7 @@ class MBP_UserDigest
    */
   public function produceUserDigestQueue($testUsers = array()) {
 
-    echo PHP_EOL . '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL . PHP_EOL;
+    echo PHP_EOL . '------- mbp-user-digest->produceUserDigestQueue START: ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL . PHP_EOL;
 
     $testUserCount = count($testUsers);
     $deleteCount = 0;
@@ -81,10 +81,10 @@ class MBP_UserDigest
     do {
 
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
-      echo '->produceUserDigestQueue curlGET: ' . $userApiUrl . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo '->produceUserDigestQueue curlGET: ' . $userApiUrl . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
       $result = $this->toolbox->curlGET($userApiUrl);
       $fetched += count($result[0]->results);
-      echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result[0]->results) . ', fetched: ' . $fetched . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result[0]->results) . ', fetched: ' . $fetched . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
 
       if ($result[1] == 200) {
 
@@ -140,7 +140,7 @@ class MBP_UserDigest
                     $payload['drupal_uid'] = $userApiResult->drupal_uid;
                   }
 
-                  echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: ' . print_r($payload, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+                  echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: ' . $userApiResult->email . ' ('. count($campaigns) . ' campaigns) - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
 
                   $payload = json_encode($payload);
                   $this->messageBroker->publishMessage($payload);
@@ -186,7 +186,7 @@ class MBP_UserDigest
     $this->statHat->addStatName('produceUserDigestQueue');
     $this->statHat->reportCount($publishCount);
     $total = $publishCount + $mobileCount +  $deleteCount;
-    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
   }
 
   /**
