@@ -83,100 +83,108 @@ class MBP_UserDigest
       $userApiUrl = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
       echo '->produceUserDigestQueue curlGET: ' . $userApiUrl . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
       $result = $this->toolbox->curlGET($userApiUrl);
-      $fetched += count($result->results);
-      echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result->results) . ', fetched: ' . $fetched . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+      $fetched += count($result[0]->results);
+      echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result[0]->results) . ', fetched: ' . $fetched . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
-      foreach($result->results as $resultCount => $userApiResult) {
+      if ($result[1] == 200) {
 
-        // Only process non "@mobile" addresses
-        if (isset($userApiResult->email) && (strpos($userApiResult->email, '@mobile') === FALSE || strlen(substr($userApiResult->email, strpos($userApiResult->email, '@mobile'))) > 7)) {
+        foreach($result[0]->results as $resultCount => $userApiResult) {
 
-          // If specific test users are defined only create queue entries
-          // for those users
-          if ( (isset($testUsers) && $testUserCount > 0 && in_array($userApiResult->email, $testUsers)) ||
-               ($testUserCount == 0) ) {
+          // Only process non "@mobile" addresses
+          if (isset($userApiResult->email) && (strpos($userApiResult->email, '@mobile') === FALSE || strlen(substr($userApiResult->email, strpos($userApiResult->email, '@mobile'))) > 7)) {
 
-            // Exclude users who have have been banned OR no preference has been set for banning
-            if ( (!isset($userApiResult->subscriptions)) ||
-                 (isset($userApiResult->subscriptions->banned) && $userApiResult->subscriptions->banned != TRUE) ) {
+            // If specific test users are defined only create queue entries
+            // for those users
+            if ( (isset($testUsers) && $testUserCount > 0 && in_array($userApiResult->email, $testUsers)) ||
+                 ($testUserCount == 0) ) {
 
-              // Exclude users who have unsubscribed from Digest messages OR no preference has been set of digest
-              if ( (!isset($userApiResult->subscriptions->digest)) ||
-                   (isset($userApiResult->subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) ) {
+              // Exclude users who have have been banned OR no preference has been set for banning
+              if ( (!isset($userApiResult->subscriptions)) ||
+                   (isset($userApiResult->subscriptions->banned) && $userApiResult->subscriptions->banned != TRUE) ) {
 
-                if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
-                  $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
-                  $this->statHat->addStatName('produceUserDigestQueue - DEFAULT_FIRST_NAME used');
-                }
-                $campaigns = array();
-                foreach ($userApiResult->campaigns as $campaignCount => $campaign) {
-                  if (isset($campaign->nid)) {
-                    $campaigns[$campaignCount] = array(
-                      'nid' => $campaign->nid
-                    );
-                    if (isset($campaign->signup)) {
-                      $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+                // Exclude users who have unsubscribed from Digest messages OR no preference has been set of digest
+                if ( (!isset($userApiResult->subscriptions->digest)) ||
+                     (isset($userApiResult->subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) ) {
+
+                  if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
+                    $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
+                    $this->statHat->addStatName('produceUserDigestQueue - DEFAULT_FIRST_NAME used');
+                  }
+                  $campaigns = array();
+                  foreach ($userApiResult->campaigns as $campaignCount => $campaign) {
+                    if (isset($campaign->nid)) {
+                      $campaigns[$campaignCount] = array(
+                        'nid' => $campaign->nid
+                      );
+                      if (isset($campaign->signup)) {
+                        $campaigns[$campaignCount]['signup'] = strtotime($campaign->signup);
+                      }
+                      if (isset($campaign->reportback)) {
+                        $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+                      }
                     }
-                    if (isset($campaign->reportback)) {
-                      $campaigns[$campaignCount]['reportback'] = strtotime($campaign->reportback);
+                    else {
+                      echo 'Missing campaign activity nid!', PHP_EOL;
+                      echo('<pre>' . print_r($userApiResult, TRUE) . '</pre>');
                     }
                   }
-                  else {
-                    echo 'Missing campaign activity nid!', PHP_EOL;
-                    echo('<pre>' . print_r($userApiResult, TRUE) . '</pre>');
+
+                  $payload = array(
+                    'email' => $userApiResult->email,
+                    'campaigns' => $campaigns,
+                    'merge_vars' => array(
+                      'FNAME' => ucwords(strtolower($userApiResult->first_name)),
+                    )
+                  );
+                  if (isset($userApiResult->drupal_uid)) {
+                    $payload['drupal_uid'] = $userApiResult->drupal_uid;
                   }
+
+                  echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: ' . print_r($payload, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+
+                  $payload = json_encode($payload);
+                  $this->messageBroker->publishMessage($payload);
+
+                  $this->statHat->addStatName('produceUserDigestQueue - queued digest');
+                  $publishCount++;
                 }
 
-                $payload = array(
-                  'email' => $userApiResult->email,
-                  'campaigns' => $campaigns,
-                  'merge_vars' => array(
-                    'FNAME' => ucwords(strtolower($userApiResult->first_name)),
-                  )
-                );
-                if (isset($userApiResult->drupal_uid)) {
-                  $payload['drupal_uid'] = $userApiResult->drupal_uid;
-                }
-
-                echo '------- mbp-user-digest->produceUserDigestQueue Message Queued: ' . print_r($payload, TRUE) . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
-
-                $payload = json_encode($payload);
-                $this->messageBroker->publishMessage($payload);
-
-                $this->statHat->addStatName('produceUserDigestQueue - queued digest');
-                $publishCount++;
               }
 
             }
 
           }
+          else {
+            $this->statHat->addStatName('produceUserDigestQueue - @mobile number, skipped');
+            $mobileCount++;
+          }
+
+          $recordsProcessed++;
+          $this->statHat->reportCount(1);
+          $this->statHat->clearAddedStatNames();
 
         }
-        else {
-          $this->statHat->addStatName('produceUserDigestQueue - @mobile number, skipped');
-          $mobileCount++;
-        }
+        $pageCount++;
 
-        $recordsProcessed++;
-        $this->statHat->reportCount(1);
-        $this->statHat->clearAddedStatNames();
+        echo '->produceUserDigestQueue batch END: ' . date('D M j G:i:s T Y'), PHP_EOL;
+        echo '- ' .  $publishCount . ' queued', PHP_EOL;
+        echo '- @mobile: ' . $mobileCount . ' skipped', PHP_EOL;
+        echo '- ' . $deleteCount . ' deleted', PHP_EOL;
+        echo '- records processed: ' . $recordsProcessed, PHP_EOL;
+        echo '- Total processed: ' . ($publishCount + $mobileCount +  $deleteCount), PHP_EOL;
+        echo PHP_EOL;
 
       }
-      $pageCount++;
-
-      echo '->produceUserDigestQueue batch END: ' . date('D M j G:i:s T Y'), PHP_EOL;
-      echo '- ' .  $publishCount . ' queued', PHP_EOL;
-      echo '- @mobile: ' . $mobileCount . ' skipped', PHP_EOL;
-      echo '- ' . $deleteCount . ' deleted', PHP_EOL;
-      echo '- records processed: ' . $recordsProcessed, PHP_EOL;
-      echo '- Total processed: ' . ($publishCount + $mobileCount +  $deleteCount), PHP_EOL;
-      echo PHP_EOL;
+      else {
+        echo 'ERROR - $this->toolbox->curlGET failed.', PHP_EOL;
+        echo '- retrying page: ' . $pageCount . ' in one minute...', PHP_EOL;
+        sleep(60);
+      }
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
     $this->statHat->addStatName('produceUserDigestQueue');
     $this->statHat->reportCount($publishCount);
-
     $total = $publishCount + $mobileCount +  $deleteCount;
     echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
   }
