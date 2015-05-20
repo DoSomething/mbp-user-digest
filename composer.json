@@ -1,7 +1,7 @@
 {
     "name": "DoSomething/mbp-user-digest",
     "type": "library",
-    "version": "0.1.4",
+    "version": "0.2.0",
     "description": "Consumer application for the Message Broker system that consumes entries in the userDigestQueue The queue entries are used to trigger composing of a campaign activity digest message that's sent as a batch submission to Mandrill as a single Send-Template request daily.",
     "keywords": ["message broker"],
     "homepage": "https://github.com/DoSomething/mbp-user-digest",
@@ -14,9 +14,8 @@
     ],
     "require": {
         "php": ">= 5.3.0",
-        "videlalvaro/php-amqplib": "v2.1.0",
-        "DoSomething/messagebroker-phplib": "0.1.*",
-        "dosomething/mb-toolbox": "0.3.*",
+        "DoSomething/messagebroker-phplib": "0.2.*",
+        "dosomething/mb-toolbox": "0.4.*",
         "dosomething/mb-stat-tracker": "v0.0.3"
     },
     "require-dev": {
