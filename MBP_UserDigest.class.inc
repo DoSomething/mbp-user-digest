@@ -2,6 +2,7 @@
 
 use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\MBStatTracker\StatHat;
+use DoSomething\MB_Toolbox\MB_Configuration;
 
 class MBP_UserDigest
 {
@@ -17,9 +18,21 @@ class MBP_UserDigest
   private $settings;
 
   /**
+   * RabbitMQ configuration settings.
+   *
+   * @var array
+   */
+  private $config;
+
+  /**
    * Message Broker connection to RabbitMQ
    */
   private $messageBroker;
+
+  /**
+   * Message Broker connection to RabbitMQ chasnnel
+   */
+  private $channel;
 
   /**
    * Collection of helper methods
@@ -47,9 +60,9 @@ class MBP_UserDigest
    * @param array $settings
    *  Additional configuration environment settings
    */
-  public function __construct($credentials, $config, $settings) {
+  public function __construct($credentials, $settings) {
+    $this->credentials = $credentials;
     $this->settings = $settings;
-    $this->messageBroker = new MessageBroker($credentials, $config);
 
     $this->toolbox = new MB_Toolbox($settings);
 
@@ -58,7 +71,10 @@ class MBP_UserDigest
   }
 
   /**
-   * Collect users (email) for digest message batch
+   * Collect users (email) for digest message batch.
+   *
+   * @param array $testUsers
+   *   An optional list of test users to user rather than using the /users results
    */
   public function produceUserDigestQueue($testUsers = array()) {
 
@@ -71,6 +87,29 @@ class MBP_UserDigest
     $recordsProcessed = 0;
     $fetched = 0;
     $pageCount = 1;
+
+    $config = array();
+    $configSource = __DIR__ . '/messagebroker-config/mb_config.json';
+    $mb_config = new MB_Configuration($configSource, $this->settings);
+    $userDigestExchange = $mb_config->exchangeSettings('directUserDigestExchange');
+
+    $this->config = array(
+      'exchange' => array(
+        'name' => $userDigestExchange->name,
+        'type' => $userDigestExchange->type,
+        'passive' => $userDigestExchange->passive,
+        'durable' => $userDigestExchange->durable,
+        'auto_delete' => $userDigestExchange->auto_delete,
+      ),
+      'queue' => array(
+        array(
+          'passive' => $userDigestExchange->queues->userDigestQueue->passive,
+          'durable' =>  $userDigestExchange->queues->userDigestQueue->durable,
+          'exclusive' =>  $userDigestExchange->queues->userDigestQueue->exclusive,
+          'auto_delete' =>  $userDigestExchange->queues->userDigestQueue->auto_delete,
+        ),
+      ),
+    );
 
     $curlUrl = $this->settings['ds_user_api_host'];
     $port = $this->settings['ds_user_api_port'];
@@ -87,6 +126,15 @@ class MBP_UserDigest
       echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result[0]->results) . ', fetched: ' . $fetched . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
 
       if ($result[1] == 200) {
+
+        $queueName = 'digest-' . time();
+
+        $this->config['queue'][0]['name'] = $queueName;
+        $this->config['queue'][0]['bindingKey'] = $queueName;
+        $this->config['routingKey'] = $queueName;
+        $this->messageBroker = new MessageBroker($this->credentials, $this->config);
+        $connection = $this->messageBroker->connection;
+        $this->channel = $connection->channel();
 
         foreach($result[0]->results as $resultCount => $userApiResult) {
 
@@ -164,6 +212,8 @@ class MBP_UserDigest
           $this->statHat->clearAddedStatNames();
 
         }
+        unset($this->channel);
+        unset($this->messageBroker);
         $pageCount++;
 
         echo '->produceUserDigestQueue batch END: ' . date('D M j G:i:s T Y'), PHP_EOL;
@@ -173,7 +223,6 @@ class MBP_UserDigest
         echo '- records processed: ' . $recordsProcessed, PHP_EOL;
         echo '- Total processed: ' . ($publishCount + $mobileCount +  $deleteCount), PHP_EOL;
         echo PHP_EOL;
-
       }
       else {
         echo 'ERROR - $this->toolbox->curlGET failed.', PHP_EOL;
@@ -187,6 +236,7 @@ class MBP_UserDigest
     $this->statHat->reportCount($publishCount);
     $total = $publishCount + $mobileCount +  $deleteCount;
     echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
+
   }
 
   /**
