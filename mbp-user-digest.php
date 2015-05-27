@@ -11,7 +11,6 @@ date_default_timezone_set('America/New_York');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\MB_Toolbox\MB_Configuration;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
@@ -37,37 +36,11 @@ $settings = array(
   'ds_user_api_port' => getenv('DS_USER_API_PORT'),
 );
 
-$config = array();
-$source = __DIR__ . '/messagebroker-config/mb_config.json';
-$mb_config = new MB_Configuration($source, $settings);
-$userDigestExchange = $mb_config->exchangeSettings('directUserDigestExchange');
-
-$config = array(
-  'exchange' => array(
-    'name' => $userDigestExchange->name,
-    'type' => $userDigestExchange->type,
-    'passive' => $userDigestExchange->passive,
-    'durable' => $userDigestExchange->durable,
-    'auto_delete' => $userDigestExchange->auto_delete,
-  ),
-  'queue' => array(
-    array(
-      'name' => $userDigestExchange->queues->userDigestQueue->name,
-      'passive' => $userDigestExchange->queues->userDigestQueue->passive,
-      'durable' =>  $userDigestExchange->queues->userDigestQueue->durable,
-      'exclusive' =>  $userDigestExchange->queues->userDigestQueue->exclusive,
-      'auto_delete' =>  $userDigestExchange->queues->userDigestQueue->auto_delete,
-      'bindingKey' => $userDigestExchange->queues->userDigestQueue->binding_key,
-    ),
-  ),
-  'routingKey' => $userDigestExchange->queues->userDigestQueue->routing_key,
-);
-
 
 echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 // Kick off
-$mbpUserDigest = new MBP_UserDigest($credentials, $config, $settings);
+$mbpUserDigest = new MBP_UserDigest($credentials, $settings);
 
 $targetUsers = NULL;
 
