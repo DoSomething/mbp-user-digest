@@ -1,5 +1,6 @@
 <?php
 
+namespace DoSomething\MBP_UserDigest;
 use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\StatHat\Client as StatHat;
 
