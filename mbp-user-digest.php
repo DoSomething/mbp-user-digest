@@ -36,11 +36,34 @@ $settings = array(
   'ds_user_api_port' => getenv('DS_USER_API_PORT'),
 );
 
+$config = array();
+$configSource = __DIR__ . '/messagebroker-config/mb_config.json';
+$mb_config = new MB_Configuration($configSource, $this->settings);
+$userDigestExchange = $mb_config->exchangeSettings('directUserDigestExchange');
+
+$this->config = array(
+  'exchange' => array(
+    'name' => $userDigestExchange->name,
+    'type' => $userDigestExchange->type,
+    'passive' => $userDigestExchange->passive,
+    'durable' => $userDigestExchange->durable,
+    'auto_delete' => $userDigestExchange->auto_delete,
+  ),
+  'queue' => array(
+    array(
+      'passive' => $userDigestExchange->queues->userDigestQueue->passive,
+      'durable' =>  $userDigestExchange->queues->userDigestQueue->durable,
+      'exclusive' =>  $userDigestExchange->queues->userDigestQueue->exclusive,
+      'auto_delete' =>  $userDigestExchange->queues->userDigestQueue->auto_delete,
+    ),
+  ),
+);
+
 
 echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 // Kick off
-$mbpUserDigest = new MBP_UserDigest($credentials, $settings);
+$mbpUserDigest = new MBP_UserDigest($credentials, $settings, $config);
 
 $targetUsers = NULL;
 

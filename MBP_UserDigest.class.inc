@@ -1,7 +1,7 @@
 <?php
 
 use DoSomething\MB_Toolbox\MB_Toolbox;
-use DoSomething\MBStatTracker\StatHat;
+use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Configuration;
 
 class MBP_UserDigest
@@ -9,6 +9,14 @@ class MBP_UserDigest
 
   const DEFAULT_FIRST_NAME = "Doer";
   const PAGE_SIZE = 5000;
+
+
+  /**
+   * Setting from external services - Mailchimp.
+   *
+   * @var array
+   */
+  private $credentials;
 
   /**
    * Setting from external services - Mailchimp.
@@ -60,14 +68,16 @@ class MBP_UserDigest
    * @param array $settings
    *  Additional configuration environment settings
    */
-  public function __construct($credentials, $settings) {
+  public function __construct($credentials, $settings, $config) {
     $this->credentials = $credentials;
     $this->settings = $settings;
+    $this->config = $config;
 
     $this->toolbox = new MB_Toolbox($settings);
 
-    $this->statHat = new StatHat($settings['stathat_ez_key'], 'mbp-user-digest:');
-    $this->statHat->setIsProduction($this->settings['use_stathat_tracking']);
+    // new StatHat(['ez_key' => '...', 'user_key' => '...']);
+    $this->statHat = new StatHat([$settings['stathat_ez_key'], 'user_key' => 'mbp-user-digest:']);
+    $this->statHat->isProduction($this->settings['use_stathat_tracking']);
   }
 
   /**
@@ -87,29 +97,6 @@ class MBP_UserDigest
     $recordsProcessed = 0;
     $fetched = 0;
     $pageCount = 1;
-
-    $config = array();
-    $configSource = __DIR__ . '/messagebroker-config/mb_config.json';
-    $mb_config = new MB_Configuration($configSource, $this->settings);
-    $userDigestExchange = $mb_config->exchangeSettings('directUserDigestExchange');
-
-    $this->config = array(
-      'exchange' => array(
-        'name' => $userDigestExchange->name,
-        'type' => $userDigestExchange->type,
-        'passive' => $userDigestExchange->passive,
-        'durable' => $userDigestExchange->durable,
-        'auto_delete' => $userDigestExchange->auto_delete,
-      ),
-      'queue' => array(
-        array(
-          'passive' => $userDigestExchange->queues->userDigestQueue->passive,
-          'durable' =>  $userDigestExchange->queues->userDigestQueue->durable,
-          'exclusive' =>  $userDigestExchange->queues->userDigestQueue->exclusive,
-          'auto_delete' =>  $userDigestExchange->queues->userDigestQueue->auto_delete,
-        ),
-      ),
-    );
 
     $curlUrl = $this->settings['ds_user_api_host'];
     $port = $this->settings['ds_user_api_port'];
