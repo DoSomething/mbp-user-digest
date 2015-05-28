@@ -114,14 +114,7 @@ class MBP_UserDigest
 
       if ($result[1] == 200) {
 
-        $queueName = 'digest-' . time();
-
-        $this->config['queue'][0]['name'] = $queueName;
-        $this->config['queue'][0]['bindingKey'] = $queueName;
-        $this->config['routingKey'] = $queueName;
-        $this->messageBroker = new MessageBroker($this->credentials, $this->config);
-        $connection = $this->messageBroker->connection;
-        $this->channel = $connection->channel();
+        $this->setupQueue();
 
         foreach($result[0]->results as $resultCount => $userApiResult) {
 
@@ -224,6 +217,22 @@ class MBP_UserDigest
     $total = $publishCount + $mobileCount +  $deleteCount;
     echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
 
+  }
+
+  /**
+   * Create new temporaty queue to store batch of digest users for processing
+   */
+  public function setupQueue() {
+
+    $queueName = 'digest-' . time();
+    echo '- setupQueue(): ' . $queueName, PHP_EOL;
+
+    $this->config['queue'][0]['name'] = $queueName;
+    $this->config['queue'][0]['bindingKey'] = $queueName;
+    $this->config['routingKey'] = $queueName;
+    $this->messageBroker = new MessageBroker($this->credentials, $this->config);
+    $connection = $this->messageBroker->connection;
+    $this->channel = $connection->channel();
   }
 
   /**
