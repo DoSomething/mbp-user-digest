@@ -11,6 +11,7 @@ date_default_timezone_set('America/New_York');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
+use DoSomething\MB_Toolbox\MB_Configuration;
 
 // Load configuration settings common to the Message Broker system
 // symlinks in the project directory point to the actual location of the files
@@ -29,7 +30,7 @@ $credentials = array(
 );
 $settings = array(
   'stathat_ez_key' => getenv("STATHAT_EZKEY"),
-  'use_stathat_tracking' => getenv('USE_STAT_TRACKING'),
+  'stathat_disable_tracking' => getenv('DISABLE_STAT_TRACKING'),
   'ds_drupal_api_host' => getenv('DS_DRUPAL_API_HOST'),
   'ds_drupal_api_port' => getenv('DS_DRUPAL_API_PORT'),
   'ds_user_api_host' => getenv('DS_USER_API_HOST'),
@@ -38,10 +39,10 @@ $settings = array(
 
 $config = array();
 $configSource = __DIR__ . '/messagebroker-config/mb_config.json';
-$mb_config = new MB_Configuration($configSource, $this->settings);
+$mb_config = new MB_Configuration($configSource, $settings);
 $userDigestExchange = $mb_config->exchangeSettings('directUserDigestExchange');
 
-$this->config = array(
+$config = array(
   'exchange' => array(
     'name' => $userDigestExchange->name,
     'type' => $userDigestExchange->type,
