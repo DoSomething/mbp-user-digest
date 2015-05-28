@@ -2,7 +2,6 @@
 
 use DoSomething\MB_Toolbox\MB_Toolbox;
 use DoSomething\StatHat\Client as StatHat;
-use DoSomething\MB_Toolbox\MB_Configuration;
 
 class MBP_UserDigest
 {
@@ -74,10 +73,10 @@ class MBP_UserDigest
     $this->config = $config;
 
     $this->toolbox = new MB_Toolbox($settings);
-
-    // new StatHat(['ez_key' => '...', 'user_key' => '...']);
-    $this->statHat = new StatHat([$settings['stathat_ez_key'], 'user_key' => 'mbp-user-digest:']);
-    $this->statHat->isProduction($this->settings['use_stathat_tracking']);
+    $this->statHat = new StatHat([
+      'ez_key' => $settings['stathat_ez_key'],
+      'debug' => $settings['stathat_disable_tracking']
+    ]);
   }
 
   /**
@@ -113,7 +112,6 @@ class MBP_UserDigest
       echo '->produceUserDigestQueue page: ' . $pageCount . ', results: ' . count($result[0]->results) . ', fetched: ' . $fetched . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
 
       if ($result[1] == 200) {
-
         $this->setupQueue();
 
         foreach($result[0]->results as $resultCount => $userApiResult) {
@@ -136,7 +134,7 @@ class MBP_UserDigest
 
                   if (!isset($userApiResult->first_name) ||  $userApiResult->first_name == '') {
                     $userApiResult->first_name = self::DEFAULT_FIRST_NAME;
-                    $this->statHat->addStatName('produceUserDigestQueue - DEFAULT_FIRST_NAME used');
+                    $this->statHat->ezCount('mbp-user-digest: produceUserDigestQueue - DEFAULT_FIRST_NAME used', 1);
                   }
                   $campaigns = array();
                   foreach ($userApiResult->campaigns as $campaignCount => $campaign) {
@@ -172,8 +170,7 @@ class MBP_UserDigest
 
                   $payload = json_encode($payload);
                   $this->messageBroker->publishMessage($payload);
-
-                  $this->statHat->addStatName('produceUserDigestQueue - queued digest');
+                  $this->statHat->ezCount('mbp-user-digest: produceUserDigestQueue - queued digest', 1);
                   $publishCount++;
                 }
 
@@ -183,14 +180,10 @@ class MBP_UserDigest
 
           }
           else {
-            $this->statHat->addStatName('produceUserDigestQueue - @mobile number, skipped');
+            $this->statHat->ezCount('mbp-user-digest: produceUserDigestQueue - @mobile number, skipped', 1);
             $mobileCount++;
           }
-
           $recordsProcessed++;
-          $this->statHat->reportCount(1);
-          $this->statHat->clearAddedStatNames();
-
         }
         unset($this->channel);
         unset($this->messageBroker);
@@ -212,11 +205,10 @@ class MBP_UserDigest
 
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
-    $this->statHat->addStatName('produceUserDigestQueue');
-    $this->statHat->reportCount($publishCount);
+    $this->statHat->ezCount('mbp-user-digest: produceUserDigestQueue', $publishCount);
     $total = $publishCount + $mobileCount +  $deleteCount;
-    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
 
+    echo '------- mbp-user-digest->produceUserDigestQueue END: ' . $publishCount . ' queued - @mobile: ' . $mobileCount . ' skipped.' . $deleteCount . ' deleted. Total processed: ' . $total . ' - ' . date('D j M Y G:i:s T') . ' -------', PHP_EOL;
   }
 
   /**
@@ -233,6 +225,8 @@ class MBP_UserDigest
     $this->messageBroker = new MessageBroker($this->credentials, $this->config);
     $connection = $this->messageBroker->connection;
     $this->channel = $connection->channel();
+
+    $this->statHat->ezCount('mbp-user-digest: setupQueue()', 1);
   }
 
   /**
