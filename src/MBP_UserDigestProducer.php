@@ -16,20 +16,22 @@ use DoSomething\MB_Toolbox\MB_Toolbox_BaseProducer;
 class MBC_UserDigestProducer extends MB_Toolbox_BaseProducer
 {
   
+  // The number of user documents to collect in a singe page request to /users
+  const PAGE_SIZE = 5000;
+  
   /**
    * Create entries in userDigestProducerQueue for each of the paged queries to make
    * to mb-user-api. Additional consumers of the queue will increate the rate that
    * the user data for digest generation will be prepared for consumption by
-   * mbc-digest-email. 
+   * mbc-digest-email. php 
    */
   static public function producer() {
 
     $pageCount = 0;
-    self::snapShotCollection();
     do {
       $pageCount++;
-      $userAPIPage = self::generatePageRequests($pageCount);
-      self::produceQueue($payload)
+      $userAPIPageURL = self::generatePageRequests($pageCount);
+      self::produceQueue($payload);
 
 
 
@@ -38,22 +40,17 @@ class MBC_UserDigestProducer extends MB_Toolbox_BaseProducer
     } while ($resultCount + 1 == self::PAGE_SIZE);
 
   }
-
-  /**
-   * snapShotCollection: Create snapshot of user data to "freeze" document state. Necessary to ensure data structure / order
-   * is consistent while collection is processed in paged "chunks".
-   *
-   * #param string $collectionName
-   */
-  static public function snapShotCollection($collectionName) {
-    
-    
-  }
   
   /**
-   * generatePageRequests: 
+   * generatePageRequestsURL: Construct URL to send request for user documents
+   *
+   * @param integer $page
+   *   The page of user documents to request.
+   *
+   * @return string $usersPagedURL
+   *   The URL to request a page of user documents.
    */
-  static public function generatePageRequests($pageCount) {
+  static public function generatePageRequestsURL($page) {
     
     $curlUrl = $this->settings['ds_user_api_host'];
     $port = $this->settings['ds_user_api_port'];
@@ -61,8 +58,8 @@ class MBC_UserDigestProducer extends MB_Toolbox_BaseProducer
       $curlUrl .= ':' . (int) $port;
     }
     
-    $userAPIPage = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
-    return $userAPIPage;
+    $usersPagedURL = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
+    return $usersPagedURL;
   }
 
   
@@ -71,7 +68,6 @@ class MBC_UserDigestProducer extends MB_Toolbox_BaseProducer
    */
   static public function produceQueue($payload) {
 
- 
     parent::produceQueue($payload);
   }
 }
