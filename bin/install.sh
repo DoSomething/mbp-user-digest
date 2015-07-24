@@ -1,16 +1,16 @@
 #!/bin/bash
 ##
-# Installation script for mbp-user-import
+# Installation script for mbp-user-digest
 ##
 
 # Assume messagebroker-config repo is one directory up
-cd ../../messagebroker-config
+cd ../messagebroker-config
 
 # Gather path from root
 MBCONFIG=`pwd`
 
 # Back to mbp-user-import
-cd ../messagebroker-ds-PHP/mbc-image-processor
+cd ../mbp-user-digest
 
 # Create SymLink for mbp-user-import application to make reference to for all Message Broker configuration settings
 ln -s $MBCONFIG .
