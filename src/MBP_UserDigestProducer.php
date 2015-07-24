@@ -15,30 +15,56 @@ use DoSomething\MB_Toolbox\MB_Toolbox_BaseProducer;
  */
 class MBC_UserDigestProducer extends MB_Toolbox_BaseProducer
 {
-  
+
   // The number of user documents to collect in a singe page request to /users
   const PAGE_SIZE = 5000;
-  
+
+  /**
+   * startTime - The date the request message started to be generated.
+   *
+   * @var string $startTime
+   */
+  private $startTime;
+
+  public function __construct($messageBroker, StatHat $statHat, MB_Toolbox $toolbox, $settings) {
+    parent::__construct($messageBroker, $statHat, $toolbox, $settings);
+
+    $this->startTime = date('c');
+  }
+
   /**
    * Create entries in userDigestProducerQueue for each of the paged queries to make
    * to mb-user-api. Additional consumers of the queue will increate the rate that
    * the user data for digest generation will be prepared for consumption by
-   * mbc-digest-email. php 
+   * mbc-digest-email.
    */
   static public function producer() {
+
+    self::gatherTotalPages();
 
     $pageCount = 0;
     do {
       $pageCount++;
-      $userAPIPageURL = self::generatePageRequests($pageCount);
-      self::produceQueue($payload);
+      $usersPagedURL = self::generatePageRequestsURL($pageCount);
+      self::produceQueue($usersPagedURL);
 
+    } while ($pageCount > $totalPages);
 
+  }
 
+  /**
+   * gatherTotalPages: Construct URL to send request for user documents
+   *
+   * @return integer $totalPages
+   *   The total number of pages.
+   */
+  static public function gatherTotalPages() {
 
-        
-    } while ($resultCount + 1 == self::PAGE_SIZE);
+    // Request the total number of user documents that have campaign activity
+    $totalDocuments = '';
+    $totalPages = round($totalDocuments / self::PAGE_SIZE, 0, PHP_ROUND_HALF_ODD);
 
+    return $totalPages;
   }
   
   /**
@@ -64,10 +90,22 @@ class MBC_UserDigestProducer extends MB_Toolbox_BaseProducer
 
   
   /**
-   * produceQueue: 
+   * produceQueue: Add message to userDigestProducerQueue
+   *
+   * @param string $usersPagedURL
+   *   URL to add to message payload
    */
-  static public function produceQueue($payload) {
+  static public function produceQueue($usersPagedURL) {
 
-    parent::produceQueue($payload);
+    // @todo: Use common message formatter for all producers and consumers in Message Broker system.
+    // Ensures consistent message structure.
+    $payload = array(
+      'url' => $usersPagedURL,
+      'requested' => time(),
+      'startTime' => $this->startTime,
+    );
+
+    $routingKey = 'userDigestDirectorQueue';
+    parent::produceQueue($payload, $routingKey);
   }
 }
