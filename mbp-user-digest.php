@@ -47,6 +47,6 @@ elseif (isset($argv[1])) {
 }
 
 // Gather digest message mailing list
-$mbpUserDigestProducer::produceUserDigestProducerQueue($targetUsers);
+$mbpUserDigestProducer::producer($targetUsers);
 
 echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
