@@ -12,7 +12,7 @@ define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
-use DoSomething\MBP_UserDigest\MBP_UserDigest;
+use DoSomething\MBP_UserDigest\MBP_UserDigestProducer;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
@@ -31,7 +31,7 @@ $tb = new MB_Toolbox($settings);
 echo '------- mbp-user-digest START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
 
 // Kick off
-$mbpUserDigestProducer = new MBC_UserDigestProducer($mb, $sh, $tb, $settings);
+$mbpUserDigestProducer = new MBP_UserDigestProducer($mb, $sh, $tb, $settings);
 
 // Collect targetCSV / targetUsers parameters
 $targetUsers = NULL;
