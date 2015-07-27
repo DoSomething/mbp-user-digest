@@ -2,7 +2,8 @@
 /**
  * A template for all producer classes within the Message Broker system.
  */
-namespace DoSomething\MB_Toolbox;
+// Adjust to DoSomething\MBP_UserDigest when moved to MB_Toolbox
+namespace DoSomething\MBP_UserDigest;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
@@ -61,6 +62,25 @@ abstract class MB_Toolbox_BaseProducer
     $this->statHat = $statHat;
     $this->toolbox = $toolbox;
     $this->settings = $settings;
+  }
+
+  /**
+   * generatePayload: Format message payload
+   *
+   * @param string $usersPagedURL
+   *   URL to add to message payload
+   * @param string $routingKey
+   *   The key to send with message to determine which queues bound to the
+   *   exchange will receive the message.
+   */
+  public function generatePayload($usersPagedURL, $routingKey) {
+
+    // @todo: Use common message formatted for all producers and consumers in Message Broker system.
+    // Ensures consistent message structure.
+    $payload = array(
+      'requested' => time(),
+      'startTime' => $this->startTime,
+    );
   }
 
   /**
