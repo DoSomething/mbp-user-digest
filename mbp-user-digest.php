@@ -8,6 +8,7 @@
  */
 
 date_default_timezone_set('America/New_York');
+define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
 
 // Load up the Composer autoload magic
 require_once __DIR__ . '/vendor/autoload.php';
@@ -16,7 +17,7 @@ use DoSomething\MBP_UserDigest\MBP_UserDigest;
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
 
-require_once __DIR__ . '/mbp-user-digest-new.config.inc';
+require_once __DIR__ . '/mbp-user-digest.config.inc';
 
 // Create objects for injection into MBC_ImageProcessor
 $mb = new MessageBroker($credentials, $config);
