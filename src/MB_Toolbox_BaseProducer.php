@@ -44,17 +44,14 @@ abstract class MB_Toolbox_BaseProducer
   protected $settings;
 
   /**
-   * Constructor for MBC_BaseConsumer - all consumer applications should extend this base class.
+   * Constructor for MB_Toolbox_BaseConsumer - all consumer applications should extend this base class.
    *
    * @param object $messageBroker
    *   The Message Broker object used to interface the RabbitMQ server exchanges and related queues.
-   *  
    * @param object $statHat
    *   Track application activity by triggering counters in StatHat service.
-   *
    * @param object $toolbox
    *   A collection of common tools for the Message Broker system.
-   *   
    * @param array $settings
    *   Settings from internal and external services used by the application.
    */
@@ -70,13 +67,15 @@ abstract class MB_Toolbox_BaseProducer
    * Initial method triggered by blocked call in base mbc-??-??.php file. The $payload is the
    * contents of the message being processed from the queue.
    *
-   * @param array $payload
-   *   The contents of the queue entry
+   * @param string $payload
+   *   The contents of a message to submit to the queue entry
+   * @param string $routingKey
+   *   The key to be applied to the exchange binding keys to direct the message between the bound queues.
    */
-  public function produceQueue($payload) {
+  public function produceQueue($payload, $routingKey) {
 
     $payload = json_encode($payload);
-    $this->messageBroker->publishMessage($payload);
+    $this->messageBroker->publishMessage($payload, $routingKey);
   }
   
 }
