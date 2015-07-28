@@ -25,11 +25,11 @@ class MBP_UserDigestProducer extends MB_Toolbox_BaseProducer
    *
    * @var string $startTime
    */
-  private $startTime;
+  public $startTime;
 
   public function __construct($messageBroker, StatHat $statHat, MB_Toolbox $toolbox, $settings) {
-    parent::__construct($messageBroker, $statHat, $toolbox, $settings);
 
+    parent::__construct($messageBroker, $statHat, $toolbox, $settings);
     $this->startTime = date('c');
   }
 
@@ -39,18 +39,18 @@ class MBP_UserDigestProducer extends MB_Toolbox_BaseProducer
    * the user data for digest generation will be prepared for consumption by
    * mbc-digest-email.
    */
-  static public function producer() {
+  public function producer() {
 
-    self::gatherTotalPages();
+    $totalPages = self::gatherTotalPages();
 
     $pageCount = 0;
     do {
       $pageCount++;
-      $usersPagedURL = self::generatePageRequestsURL($pageCount);
-      $payload = self::generatePayload();
-      parent::produceQueue($payload, 'userDigestProducerQueue');
+      $usersPagedURL = $this->generatePageRequestsURL($pageCount);
+      $payload = $this->generatePayload($usersPagedURL);
+      parent::produceQueue($payload, 'userDigestProducer');
 
-    } while ($pageCount > $totalPages);
+    } while ($pageCount < $totalPages);
 
   }
 
@@ -63,10 +63,10 @@ class MBP_UserDigestProducer extends MB_Toolbox_BaseProducer
   static private function gatherTotalPages() {
 
     // Request the total number of user documents that have campaign activity
-    $totalDocuments = '';
+    $totalDocuments = 100000;
     $totalPages = round($totalDocuments / self::PAGE_SIZE, 0, PHP_ROUND_HALF_ODD);
 
-    return $totalPages;
+    return (int) $totalPages;
   }
   
   /**
@@ -78,7 +78,7 @@ class MBP_UserDigestProducer extends MB_Toolbox_BaseProducer
    * @return string $usersPagedURL
    *   The URL to request a page of user documents.
    */
-  static private function generatePageRequestsURL($page) {
+  private function generatePageRequestsURL($pageCount) {
     
     $curlUrl = $this->settings['ds_user_api_host'];
     $port = $this->settings['ds_user_api_port'];
@@ -95,16 +95,10 @@ class MBP_UserDigestProducer extends MB_Toolbox_BaseProducer
    *
    * @param string $usersPagedURL
    *   URL to add to message payload
-   * @param string $routingKey
-   *   The key to send with message to determine which queues bound to the
-   *   exchange will receive the message.
    */
-  public function generatePayload($usersPagedURL, $routingKey = 'userDigestProducerQueue') {
+  public function generatePayload($usersPagedURL) {
 
-    parent::generatePayload($usersPagedURL, $routingKey);
-
-    // @todo: Use common message formatted for all producers and consumers in Message Broker system.
-    // Ensures consistent message structure.
+    $payload = parent::generatePayload($usersPagedURL);
     $payload['url'] = $usersPagedURL;
 
     return $payload;
