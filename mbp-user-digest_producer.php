@@ -1,6 +1,6 @@
 <?php
 /**
- * mbp-user-digest-new.php
+ * mbp-user-digest_producer.php
  *
  * A producer to create entries in the userDigestQueue via the directUserDigest
  * exchange. The mbc-user-digest application will consume the entries in the
@@ -17,7 +17,7 @@ use DoSomething\MBP_UserDigest\MBP_UserDigestProducer;
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
 
-require_once __DIR__ . '/mbp-user-digest.config.inc';
+require_once __DIR__ . '/mbp-user-digest_producer.config.inc';
 
 // Create objects for injection into MBC_ImageProcessor
 $mb = new MessageBroker($credentials, $config);
