@@ -46,7 +46,8 @@ elseif (isset($argv[1])) {
   $targetUsers = $mbpUserDigestProducer::produceUserGroupFromCSV($argv[1]);
 }
 
-// Gather digest message mailing list
-$mbpUserDigestProducer::producer($targetUsers);
+// Produce queue entries to make calls to mb-user-api
+// @todo: Add support for $targetUsers for testing
+$mbpUserDigestProducer->producer($targetUsers);
 
 echo '------- mbp-user-digest END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
