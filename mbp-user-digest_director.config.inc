@@ -27,4 +27,4 @@ $settings = array(
 );
 
 $mbConfig = new MB_Configuration($settings, CONFIG_PATH . '/mb_config.json');
-$config = $mbConfig->constructConfig('directUserDigestExchange', array('userDigestProducer_UnsubscribeLinkQueue', 'userDigestProducer_CampignsQueue', 'userDigestProducer_UserQueue'));
+$config = $mbConfig->constructConfig('directUserDigestExchange', array('userDigestDirectorQueue', 'userDigestUserQueue'));
