@@ -1,6 +1,6 @@
 <?php
 /**
- * Message Broker configuration settings for mbp-user-digest
+ * Message Broker configuration settings for mbp-user-digest_director
  */
 
 use DoSomething\MB_Toolbox\MB_Configuration;
