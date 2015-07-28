@@ -20,14 +20,14 @@ abstract class MB_Toolbox_BaseProducer
    *
    * @var object
    */
-  protected $messageBroker;
+  public $messageBroker;
 
   /**
    * StatHat object for logging of activity
    *
    * @var object
    */
-  protected $statHat;
+  public $statHat;
 
   /**
    * Message Broker Toolbox - collection of utility methods used by many of the
@@ -35,14 +35,14 @@ abstract class MB_Toolbox_BaseProducer
    *
    * @var object
    */
-  protected $toolbox;
+  public $toolbox;
 
   /**
    * Setting from external services - Mail chimp.
    *
    * @var array
    */
-  protected $settings;
+  public $settings;
 
   /**
    * Constructor for MB_Toolbox_BaseConsumer - all consumer applications should extend this base class.
@@ -69,32 +69,30 @@ abstract class MB_Toolbox_BaseProducer
    *
    * @param string $usersPagedURL
    *   URL to add to message payload
-   * @param string $routingKey
-   *   The key to send with message to determine which queues bound to the
-   *   exchange will receive the message.
    */
-  public function generatePayload($usersPagedURL, $routingKey) {
+  public function generatePayload($usersPagedURL) {
 
     // @todo: Use common message formatted for all producers and consumers in Message Broker system.
     // Ensures consistent message structure.
     $payload = array(
-      'requested' => time(),
+      'requested' => date('c'),
       'startTime' => $this->startTime,
     );
+    return $payload;
   }
 
   /**
    * Initial method triggered by blocked call in base mbc-??-??.php file. The $payload is the
    * contents of the message being processed from the queue.
    *
-   * @param string $payload
+   * @param string $message
    *   The contents of a message to submit to the queue entry
    * @param string $routingKey
    *   The key to be applied to the exchange binding keys to direct the message between the bound queues.
    */
-  public function produceQueue($payload, $routingKey) {
+  public function produceQueue($message, $routingKey) {
 
-    $payload = json_encode($payload);
+    $payload = json_encode($message);
     $this->messageBroker->publishMessage($payload, $routingKey);
   }
   
