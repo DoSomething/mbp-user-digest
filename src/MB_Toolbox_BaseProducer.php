@@ -20,57 +20,38 @@ abstract class MB_Toolbox_BaseProducer
    *
    * @var object
    */
-  public $messageBroker;
+  protected $messageBroker;
 
   /**
    * StatHat object for logging of activity
    *
    * @var object
    */
-  public $statHat;
+  protected $statHat;
 
   /**
-   * Message Broker Toolbox - collection of utility methods used by many of the
-   * Message Broker producer and consumer applications.
+   * Message Broker Toolbox cURL - collection of utility cURL methods used
+   * by many of the Message Broker producer and consumer applications.
    *
    * @var object
    */
-  public $toolbox;
-
-  /**
-   * Setting from external services - Mail chimp.
-   *
-   * @var array
-   */
-  public $settings;
+  protected $toolboxCURL;
 
   /**
    * Constructor for MB_Toolbox_BaseConsumer - all consumer applications should extend this base class.
-   *
-   * @param object $messageBroker
-   *   The Message Broker object used to interface the RabbitMQ server exchanges and related queues.
-   * @param object $statHat
-   *   Track application activity by triggering counters in StatHat service.
-   * @param object $toolbox
-   *   A collection of common tools for the Message Broker system.
-   * @param array $settings
-   *   Settings from internal and external services used by the application.
    */
-  public function __construct($messageBroker, StatHat $statHat, MB_Toolbox $toolbox, $settings) {
+  public function __construct() {
 
-    $this->messageBroker = $messageBroker;
-    $this->statHat = $statHat;
-    $this->toolbox = $toolbox;
-    $this->settings = $settings;
+    $this->mbConfig = MB_Configuration::getInstance();
+    $this->messageBroker = $this->mbConfig->getProperty('messageBroker');
+    $this->statHat = $this->mbConfig->getProperty('statHat');
+    $this->toolboxCURL = $this->mbConfig->getProperty('mbToolboxCURL');
   }
 
   /**
-   * generatePayload: Format message payload
-   *
-   * @param string $usersPagedURL
-   *   URL to add to message payload
+   * generatePayload: Basic format of message payload
    */
-  public function generatePayload($usersPagedURL) {
+  protected function generatePayload() {
 
     // @todo: Use common message formatted for all producers and consumers in Message Broker system.
     // Ensures consistent message structure.
@@ -90,9 +71,9 @@ abstract class MB_Toolbox_BaseProducer
    * @param string $routingKey
    *   The key to be applied to the exchange binding keys to direct the message between the bound queues.
    */
-  public function produceQueue($message, $routingKey) {
+  protected function produceMessage($message, $routingKey) {
 
-    $payload = json_encode($message);
+    $payload = serialize($message);
     $this->messageBroker->publishMessage($payload, $routingKey);
   }
   
