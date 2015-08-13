@@ -44,3 +44,5 @@ $mbConfig->setProperty('statHat', new StatHat([
 ]));
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
+$mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
+
