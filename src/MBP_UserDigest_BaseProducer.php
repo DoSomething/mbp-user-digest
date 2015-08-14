@@ -41,10 +41,10 @@ abstract class MBP_UserDigest_BaseProducer
   /**
    * Constructor for MB_Toolbox_BaseConsumer - all consumer applications should extend this base class.
    */
-  public function __construct() {
+  public function __construct($targetMBconfig = 'messageBroker') {
 
     $this->mbConfig = MB_Configuration::getInstance();
-    $this->messageBroker = $this->mbConfig->getProperty('messageBroker');
+    $this->messageBroker = $this->mbConfig->getProperty($targetMBconfig);
     $this->statHat = $this->mbConfig->getProperty('statHat');
     $this->toolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
   }
