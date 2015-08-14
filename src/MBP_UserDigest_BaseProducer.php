@@ -7,12 +7,13 @@ namespace DoSomething\MBP_UserDigest;
 
 use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox;
+use DoSomething\MB_Toolbox\MB_Configuration;
 
 /*
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
  * entries that match the campaign.*.* binding.
  */
-abstract class MB_Toolbox_BaseProducer
+abstract class MBP_UserDigest_BaseProducer
 {
 
   /**
@@ -45,7 +46,7 @@ abstract class MB_Toolbox_BaseProducer
     $this->mbConfig = MB_Configuration::getInstance();
     $this->messageBroker = $this->mbConfig->getProperty('messageBroker');
     $this->statHat = $this->mbConfig->getProperty('statHat');
-    $this->toolboxCURL = $this->mbConfig->getProperty('mbToolboxCURL');
+    $this->toolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
   }
 
   /**
@@ -74,7 +75,7 @@ abstract class MB_Toolbox_BaseProducer
   protected function produceMessage($message, $routingKey) {
 
     $payload = serialize($message);
-    $this->messageBroker->publishMessage($payload, $routingKey);
+    $this->messageBroker->publish($payload, $routingKey);
   }
   
 }
