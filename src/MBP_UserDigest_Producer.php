@@ -40,7 +40,7 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
    */
   public function kickoff($pageSize) {
     
-    $mbUserAPIConfig = $mbConfig->getProperty('mb_user_api_config');
+    $mbUserAPIConfig = $this->mbConfig->getProperty('mb_user_api_config');
     
     $url = $mbUserAPIConfig['host'];
     $port = $mbUserAPIConfig['port'];
@@ -53,7 +53,7 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
       'type' => 'cursor',
       'size' => $pageSize,
     );
-    $url .= http_build_query($parameters);
+    $url .= '?' . http_build_query($parameters);
     $this->usersPagedURL = $url;
 
     $routingKey = 'digestProducer';
