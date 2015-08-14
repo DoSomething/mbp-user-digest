@@ -32,12 +32,12 @@ $mbConfig->setProperty('mb_user_api_config', array(
   'port' => getenv('MB_USER_API_PORT')
 ));
 
-$mbRabbitConfig = $mbConfig->constructRabbitConfig('directUserDigestExchange', array('digestProducerQueue'));
-$mbConfig->setProperty('messageBroker_config-directUserDigestExchange', $mbRabbitConfig);
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('directUserDigest', array('digestProducerQueue'));
+$mbConfig->setProperty('messageBroker_config', $mbRabbitConfig);
 
 // Create untility objects for access anywhere within the application as a single instance
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
-$messageBrokerConfig = $mbConfig->getProperty('messageBroker_config-directUserDigestExchange');
+$messageBrokerConfig = $mbConfig->getProperty('messageBroker_config');
 $mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
 
 $mbConfig->setProperty('statHat', new StatHat([
@@ -47,4 +47,3 @@ $mbConfig->setProperty('statHat', new StatHat([
 
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
-
