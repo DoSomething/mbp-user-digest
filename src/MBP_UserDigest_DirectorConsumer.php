@@ -19,11 +19,6 @@ class MBP_UserDigest_Director extends MB_Toolbox_BaseConsumer
   const EXPIRED = 604800; // One week
   
   /**
-   * User values to process as potential digest recipient.
-   */
-  protected $digestUser;
-  
-  /**
    * Initial method triggered by blocked call in mbc-registration-mobile.php. The $payload is the
    * contents of the message being processed from the queue.
    *
@@ -35,11 +30,13 @@ class MBP_UserDigest_Director extends MB_Toolbox_BaseConsumer
     echo '- mbc-user-digest_director - MBC_RegistrationMobile_Consumer->consumeDigestProducerQueue() START', PHP_EOL;
 
     parent::consumeQueue($payload);
-    $this->setter($this->message);
     
-    if (self::canProcess($this->digestUser)) {
-      self::process();
+    if ($this->canProcess()) {
+      $this->setter($this->message);
+      $this->process();
     }
+    
+
     
     echo '- mbc-user-digest_director - MBC_RegistrationMobile_Consumer->consumeDigestProducerQueue() END', PHP_EOL;
     
@@ -53,7 +50,8 @@ class MBP_UserDigest_Director extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
     
-    $this->digestUser = '';
+    // adjust $this->message['url'] based on enviroment: local, dev vs production. Point o local or remote
+    // mb-users-api including tunnel settings for dev.
     
   }
   
@@ -84,12 +82,58 @@ class MBP_UserDigest_Director extends MB_Toolbox_BaseConsumer
    */
   protected function process() {
     
-    $mbpUserDigest_DirectorProducer = new MBP_UserDigest_DirectorProducer('messageBroker_fanoutUserDigest');
-    $mbpUserDigest_DirectorProducer->setUser = $this->digestUser;
+    // Request page from mb-users-api /users
+    list($users, $meta) = $this->processPageRequest();
     
-    $payload = $mbpUserDigest_DirectorProducer->generatePayload();
-    $routingKey = '';
-    $mbpUserDigest_DirectorProducer->produceMessage($payload, $routingKey);
+    $this->produceNextPageRequest($meta);
+    $this->processUsers($users);
+    
   }
+  
+  /**
+   * 
+   */
+  protected function processPageRequest() {
+    
+    $mbToolboxcURL = $this->mbConfig->getProperty('mbToolboxcURL');
+
+    $result = $mbToolboxcURL->curlGET($this->message['url']);
+    $users = $result->results;
+    $meta = $result->meta;
+    
+    return array($users, $meta);
+  }
+
+  /**
+   * 
+   */
+  protected function produceNextPageRequest($meta) {
+    
+  }
+  
+  /**
+   * 
+   */
+  protected function processUsers($users) {
+    
+    // @todo: support option to collect specific user documents for testing.
+    
+    // Send user details from return page to DirectorProducer
+    $mbpUserDigest_DirectorProducer = new MBP_UserDigest_DirectorProducer('messageBroker_fanoutUserDigest');
+    
+    foreach($users as $user) {
+      
+      $mbpUserDigest_DirectorProducer->setUser = $user;
+    
+      $payload = $mbpUserDigest_DirectorProducer->generatePayload();
+      $routingKey = '';
+      $mbpUserDigest_DirectorProducer->produceMessage($payload, $routingKey);
+      
+    }
+
+    
+  }
+  
+
   
 }
