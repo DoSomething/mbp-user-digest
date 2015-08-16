@@ -18,19 +18,6 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
 {
 
   /**
-   * startTime - The date the request message started to be generated.
-   *
-   * @var string $startTime
-   */
-  protected $startTime;
-
-  public function __construct() {
-
-    parent::__construct();
-    $this->startTime = date('c');
-  }
-
-  /**
    *  kickoff() - Create initial entry in digestProducerQueue to trigger
    *  production of user messages based on cursor based requests to
    *  mb-users-api.
@@ -40,18 +27,10 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
    */
   public function kickoff($pageSize) {
     
-    $mbUserAPIConfig = $this->mbConfig->getProperty('mb_user_api_config');
-    
-    $url = $mbUserAPIConfig['host'];
-    $port = $mbUserAPIConfig['port'];
-    if ($port != 0 && is_numeric($port)) {
-      $url .= ':' . (int) $port;
-    }
-    $url .= '/users';
-
+    $url = '/users';
     $parameters = array(
       'type' => 'cursor',
-      'size' => $pageSize,
+      'pageSize' => $pageSize
     );
     $url .= '?' . http_build_query($parameters);
     $this->usersPagedURL = $url;
