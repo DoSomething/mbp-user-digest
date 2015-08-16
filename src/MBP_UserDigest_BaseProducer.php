@@ -39,6 +39,13 @@ abstract class MBP_UserDigest_BaseProducer
   protected $toolboxCURL;
 
   /**
+   * startTime - The date the request message started to be generated.
+   *
+   * @var string $startTime
+   */
+  protected $startTime;
+
+  /**
    * Constructor for MB_Toolbox_BaseConsumer - all consumer applications should extend this base class.
    */
   public function __construct($targetMBconfig = 'messageBroker') {
@@ -47,6 +54,8 @@ abstract class MBP_UserDigest_BaseProducer
     $this->messageBroker = $this->mbConfig->getProperty($targetMBconfig);
     $this->statHat = $this->mbConfig->getProperty('statHat');
     $this->toolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
+
+    $this->startTime = date('c');
   }
 
   /**
@@ -70,7 +79,8 @@ abstract class MBP_UserDigest_BaseProducer
    * @param string $message
    *   The contents of a message to submit to the queue entry
    * @param string $routingKey
-   *   The key to be applied to the exchange binding keys to direct the message between the bound queues.
+   *   The key to be applied to the exchange binding keys to direct the message between the bound
+   *   queues.
    */
   protected function produceMessage($message, $routingKey) {
 
