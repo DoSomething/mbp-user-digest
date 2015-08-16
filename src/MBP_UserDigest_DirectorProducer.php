@@ -23,32 +23,41 @@ class MBP_UserDigest_DirectorProducer extends MBP_UserDigest_BaseProducer
    * @var array
    */
   protected $user;
-  
+
+  /**
+   * queueUser() : Produce user message for fanout exchange.
+   */
+  public function queueUser() {
+
+    $payload = $this->generatePayload();
+    $routingzKey = '';
+    parent::produceMessage($payload, $routingKey);
+  }
+
   /**
    * generatePayload: Format message payload
    */
   protected function generatePayload() {
 
     $payload = parent::generatePayload();
-    
-    foreach ($this->user as $setting => $userSetting) {
-      $payload[$setting] = $userSetting;
-    }
 
+    $payload['email'] = $this->user['email'];
+    $payload['first_name'] = '';
+    $payload['campaigns'] = '';
+    $payload['drupal_uid'] = '';
 
     return $payload;
   }
-  
+
   /**
    * generatePayload: Format message payload
    */
-  public function setUser() {
+  public function setUser($user) {
 
-    $this->user = '';
-
-    return $payload;
+    $this->user['email'] = '';
+    $this->user['first_name'] = '';
+    $this->user['campaigns'] = '';
+    $this->user['drupal_uid'] = '';
   }
-
-
 
 }
