@@ -179,12 +179,17 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
 
     // @todo: support option to collect specific user documents for testing.
 
-    // Send user details from return page to DirectorProducer
     $mbpUserDigest_DirectorProducer = new MBP_UserDigest_DirectorProducer('messageBroker_fanoutUserDigest');
 
     foreach($users as $user) {
-      $mbpUserDigest_DirectorProducer->setUser($user);
-      $mbpUserDigest_DirectorProducer->queueUser($user);
+      $ok = $mbpUserDigest_DirectorProducer->setUser($user);
+      if ($ok) {
+        $mbpUserDigest_DirectorProducer->queueUser($user);
+      }
+      else {
+        // remove message from queue
+        // Disconnect channel
+      }
     }
 
   }
