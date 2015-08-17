@@ -81,11 +81,14 @@ abstract class MBP_UserDigest_BaseProducer
    * @param string $routingKey
    *   The key to be applied to the exchange binding keys to direct the message between the bound
    *   queues.
+   * @param integer $deliveryMode
+   *  1: non-persistent, faster but no logging to disk, ~ 3x
+   *  2: persistent, write a copy of the message to disk
    */
-  protected function produceMessage($message, $routingKey) {
+  protected function produceMessage($message, $routingKey = '', $deliveryMode = 1) {
 
     $payload = serialize($message);
-    $this->messageBroker->publish($payload, $routingKey);
+    $this->messageBroker->publish($payload, $routingKey, $deliveryMode);
   }
   
 }
