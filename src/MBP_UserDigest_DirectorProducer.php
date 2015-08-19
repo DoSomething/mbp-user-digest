@@ -49,7 +49,13 @@ class MBP_UserDigest_DirectorProducer extends MBP_UserDigest_BaseProducer
   }
 
   /**
-   * generatePayload: Format message payload
+   * generatePayload: Format message payload based on passed tests isSubscribed(),
+   * isValidEmail() and formatting by scrubCampaigns().
+   *
+   * @param object $user
+   *   The values of the user collected from mb-user-api.
+   *
+   * @return boolean
    */
   public function setUser($user) {
 
