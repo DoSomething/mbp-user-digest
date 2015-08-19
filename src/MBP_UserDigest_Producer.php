@@ -30,7 +30,8 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
     $url = '/users';
     $parameters = array(
       'type' => 'cursor',
-      'pageSize' => $pageSize
+      'pageSize' => $pageSize,
+      'excludeNoCampaigns' => 1
     );
     $url .= '?' . http_build_query($parameters);
     $this->usersPagedURL = $url;
