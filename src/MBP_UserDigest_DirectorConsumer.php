@@ -48,6 +48,16 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
 
+    $domain = $this->domainByEnviroment();
+    $this->message['url'] = $domain . $message['url'];
+  }
+
+  /**
+   * domainByEnviroment(): Based on the detected application enviroment define the base domain
+   * for cURL requests.
+   */
+  protected function domainByEnviroment() {
+
     // adjust $this->message['url'] based on enviroment: local, dev vs production. Point o local or remote
     // mb-users-api including tunnel settings for dev.
     $envroment = 'development';
@@ -62,8 +72,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
       if ($port != 0 && is_numeric($port)) {
         $url .= ':' . (int) $port;
       }
-      $this->message['url'] = $url. $message['url'];
-
+     $domain = $url;
     }
     // dev
     // 127.0.0.1:4723
@@ -71,15 +80,18 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
 
       $url = 'http://127.0.0.1';
       $port = '4723';
-      $this->message['url'] = $url . ':' . $port . $message['url'];
-
+      $domain = $url . ':' . $port;
     }
     // local
     // localhost:4722
     else {
 
+      $url = 'localhost';
+      $port = '4722';
+      $domain = $url . ':' . $port;
     }
 
+    return $domain;
   }
 
   /**
@@ -114,7 +126,6 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
 
     $this->produceNextPageRequest($meta);
     $this->processUsers($users);
-    
   }
 
   /**
@@ -147,15 +158,14 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
     // @todo: How to use MBP_UserDigest_BaseProducer->generatePayload()
     $message = array(
       'requested' => date('c'),
-      'startTime' => '',
-//      'startTime' => $meta->cursor_request_start_time,
+      'startTime' => $meta->cursor_start_time,
     );
 
     if ($meta->direction == 1 && isset($meta->next_page_url)) {
-      $message['url'] = $meta->next_page_url;
+      $message['url'] = $this->domainByEnviroment() . $meta->next_page_url;
     }
     elseif ($meta->direction == -1 && isset($meta->previous_page_url)) {
-      $message['url'] = $meta->previous_page_url;
+      $message['url'] = $this->domainByEnviroment() . $meta->previous_page_url;
     }
 
     if (isset($message['url'])) {
