@@ -53,6 +53,7 @@ abstract class MBP_UserDigest_BaseProducer
     $this->mbConfig = MB_Configuration::getInstance();
     $this->messageBroker = $this->mbConfig->getProperty($targetMBconfig);
     $this->statHat = $this->mbConfig->getProperty('statHat');
+    $this->toolbox = $this->mbConfig->getProperty('mbToolbox');
     $this->toolboxCURL = $this->mbConfig->getProperty('mbToolboxcURL');
 
     $this->startTime = date('c');
