@@ -197,6 +197,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
         $mbpUserDigest_DirectorProducer->queueUser($user);
       }
       else {
+        echo 'MBP_UserDigest_DirectorConsumer->processUsers() rejected user removed from queue.', PHP_EOL;
         // remove message from queue
         // Disconnect channel
       }
