@@ -6,9 +6,7 @@
 namespace DoSomething\MBP_UserDigest;
 
 use DoSomething\StatHat\Client as StatHat;
-use DoSomething\MB_Toolbox\MB_Toolbox;
-// Adjust path when BaseProducer is moved into MB_Toolbox library
-use DoSomething\MBP_UserDigest\MBP_UserDigest_BaseProducer;
+use DoSomething\MB_Toolbox\MB_Toolbox_BaseProducer;
 
 /*
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
@@ -204,7 +202,7 @@ class MBP_UserDigest_DirectorProducer extends MBP_UserDigest_BaseProducer
 
       }
       else {
-        echo 'MBP_UserDigest_DirectorProducer->scrubCampaigns(): Missing campaign activity nid: ' . print_r($cmmpaign), PHP_EOL;
+        echo 'MBP_UserDigest_DirectorProducer->scrubCampaigns(): Missing campaign activity nid: ' . print_r($campaign), PHP_EOL;
       }
 
     }
