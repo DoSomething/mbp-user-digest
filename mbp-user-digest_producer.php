@@ -8,7 +8,7 @@
  */
 
 // The number of documents to request in each page request
-define('PAGE_SIZE', 5000);
+define('PAGE_SIZE', 5);
 
 date_default_timezone_set('America/New_York');
 define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
@@ -26,24 +26,31 @@ echo '------- mbp-user-digest_producer START: ' . date('D M j G:i:s T Y') . ' --
 // Kick off
 // Collect targetCSV / targetUsers parameters
 $targetUsers = NULL;
-$targetCSV = NULL;
 $mbpUserDigestProducer = new MBP_UserDigest_Producer();
-if ((isset($_GET['targetUsers']) && $_GET['targetUsers'] == 'testUsers') || (isset($argv[1]) && $argv[1] == 'testUsers')) {
-  $targetUsers = $mbpUserDigestProducer::produceTestUserGroupDigestQueue();
-}
-elseif (isset($_GET['targetUsers'])) {
-  $targetUsers = $mbpUserDigestProducer::produceUserGroupFromCSV($_GET['targetUsers']);
-}
-elseif (isset($argv[1])) {
-  $targetUsers = $mbpUserDigestProducer::produceUserGroupFromCSV($argv[1]);
-}
 
-if ($targetUsers != NULL) {
-  $mbpUserDigestProducer->setUsers($targetUsers);
-}
+if (isset($_GET['targetUsers']) || isset($_GET['targetUser']) || isset($argv[1])) {
 
-// Create initial message in digestProducerQueue to start digest
-// generation process.
-$mbpUserDigestProducer->kickoff(PAGE_SIZE);
+  if (isset($_GET['targetUsers']) && strpos($_GET['targetUsers'], '.csv') !== FALSE) {
+    $target = $mbpUserDigestProducer::produceUsersFromCSV($_GET['targetUsers']);
+  }
+  elseif (isset($argv[1]) && strpos($argv[1], '.csv') !== FALSE) {
+    $target = $mbpUserDigestProducer::produceUsersFromCSV($argv[1]);
+  }
+  elseif (isset($_GET['targetUser']) && strpos($_GET['targetUser'], '@') !== FALSE) {
+    $target = [$_GET['targetUser']];
+  }
+  elseif (isset($argv[1])) {
+    $target = [$argv[1]];
+  }
+  $mbpUserDigestProducer->userKickoff($target);
+
+}
+else {
+
+  // Create initial message in digestProducerQueue to start digest
+  // generation process.
+  $mbpUserDigestProducer->kickoff(PAGE_SIZE);
+
+}
 
 echo '------- mbp-user-digest_producer END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
