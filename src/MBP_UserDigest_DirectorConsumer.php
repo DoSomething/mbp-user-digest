@@ -2,7 +2,7 @@
 namespace DoSomething\MBP_UserDigest;
 
 use DoSomething\StatHat\Client as StatHat;
-use DoSomething\MB_Toolbox\MB_Toolbox;
+use DoSomething\MB_Toolbox\MB_Toolbox_cURL;
 use DoSomething\MB_Toolbox\MB_Toolbox_BaseConsumer;
 
 /**
@@ -18,6 +18,21 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
   // The amount of time before a message is expired (in seconds)
   const EXPIRED = 604800; // One week
 
+  /*
+   * CURL related functionality used by many Message Broker applications.
+   * @var object
+   */
+  private $mbToolboxcURL;
+
+  /**
+   * Setup MBP_UserDigest_DirectorConsumer basic functionality.
+   */
+  public function __construct() {
+
+    parent::_construct();
+    $this->mbToolboxcURL = $this->mbConfig->getProperty('mbToolboxcURL');
+  }
+
   /**
    * Initial method triggered by blocked call in mbc-registration-mobile.php. The $payload is the
    * contents of the message being processed from the queue.
@@ -27,17 +42,27 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
    */
   public function consumeDigestProducerQueue($payload) {
 
-    echo '- mbc-user-digest_director - MBC_RegistrationMobile_Consumer->consumeDigestProducerQueue() START', PHP_EOL;
+    echo '- mbc-user-digest_director - MBP_UserDigest_DirectorConsumer->consumeDigestProducerQueue() START', PHP_EOL;
 
     parent::consumeQueue($payload);
 
-    if ($this->canProcess()) {
-      $this->setter($this->message);
-      $this->process();
+    // Watch for specific user messages
+    if (strpos($this->message['url'], '/user?email=') !== FALSE) {
+
+      if ($this->canProcess()) {
+        $this->setter($this->message);
+        $this->processUser();
+      }
+
+    }
+    else {
+      if ($this->canProcess()) {
+        $this->setter($this->message);
+        $this->process();
+      }
     }
 
-    echo '- mbc-user-digest_director - MBC_RegistrationMobile_Consumer->consumeDigestProducerQueue() END', PHP_EOL;
-    
+    echo '- mbc-user-digest_director - MBP_UserDigest_DirectorConsumer->consumeDigestProducerQueue() END', PHP_EOL;
   }
 
   /**
@@ -48,50 +73,8 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
 
-    $domain = $this->domainByEnviroment();
+    $domain = $this->mbToolbox->resourceByEnviroment('mb_user_api_config');
     $this->message['url'] = $domain . $message['url'];
-  }
-
-  /**
-   * domainByEnviroment(): Based on the detected application enviroment define the base domain
-   * for cURL requests.
-   */
-  protected function domainByEnviroment() {
-
-    // adjust $this->message['url'] based on enviroment: local, dev vs production. Point o local or remote
-    // mb-users-api including tunnel settings for dev.
-    $envroment = 'development';
-
-    // production
-    // http://10.241.0.20:4722/users?type=cursor&size=5000
-    if ($envroment == 'production') {
-
-      $mbUserAPIConfig = $this->mbConfig->getProperty('mb_user_api_config');
-      $url = $mbUserAPIConfig['host'];
-      $port = $mbUserAPIConfig['port'];
-      if ($port != 0 && is_numeric($port)) {
-        $url .= ':' . (int) $port;
-      }
-     $domain = $url;
-    }
-    // dev
-    // 127.0.0.1:4723
-    elseif ($envroment == 'development') {
-
-      $url = 'http://127.0.0.1';
-      $port = '4723';
-      $domain = $url . ':' . $port;
-    }
-    // local
-    // localhost:4722
-    else {
-
-      $url = 'localhost';
-      $port = '4722';
-      $domain = $url . ':' . $port;
-    }
-
-    return $domain;
   }
 
   /**
@@ -108,8 +91,8 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
     }
 
     if (isset($this->message['startTime']) && strtotime($this->message['startTime']) < (time() - self::EXPIRED)) {
-      echo 'mbc-user-digest_director canProcess() - message older than a week. Removing from queue..', PHP_EOL;
-      $this->messageBroker->ack_back($this->message['original']);
+      echo 'mbc-user-digest_director canProcess() - message older than a week. Removing from queue.', PHP_EOL;
+      $this->messageBroker->sendAck($this->message['payload']);
       return FALSE;
     }
 
@@ -129,19 +112,25 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * 
+   * Gather next page of user documents from mb-user-api based on cursor paging.
+   *
+   * @return array
+   *  array $users: user documents
+   *  array $meta: response header values that are used to naviagate through the pages in cusor based
+   *  listing of user documents.
    */
   protected function processPageRequest() {
 
-    $mbToolboxcURL = $this->mbConfig->getProperty('mbToolboxcURL');
-    $result = $mbToolboxcURL->curlGET($this->message['url']);
-
+    $result = $this->mbToolboxcURL->curlGET($this->message['url']);
     if ($result[1] == 200) {
       $users = $result[0]->results;
       $meta = $result[0]->meta;
+
+      // Remove message from queue
+       $this->messageBroker->sendAck($this->message['payload']);
     }
     else {
-      echo 'Failed to GET results from: ' . $this->message['url'], PHP_EOL;
+      echo 'Failed to GET results from: ' . $this->message['url'] . ' Status Code: ' . $result[1], PHP_EOL;
       exit;
     }
 
@@ -151,6 +140,10 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
   /**
    * produceNextPageRequest: Based on response from mb-users-api /users?type=cursor generate and
    * publish message in digestProducerQueue.
+   *
+   * @param array $meta
+   *   Meta values sent in header of response from /users. Used to naviage through pages in cursor
+   *   based paged results of requeues to /users?type=cursor.
    * 
    */
   protected function produceNextPageRequest($meta) {
@@ -162,10 +155,10 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
     );
 
     if ($meta->direction == 1 && isset($meta->next_page_url)) {
-      $message['url'] = $this->domainByEnviroment() . $meta->next_page_url;
+      $message['url'] = $meta->next_page_url;
     }
     elseif ($meta->direction == -1 && isset($meta->previous_page_url)) {
-      $message['url'] = $this->domainByEnviroment() . $meta->previous_page_url;
+      $message['url'] = $meta->previous_page_url;
     }
 
     if (isset($message['url'])) {
@@ -183,11 +176,9 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * 
+   *
    */
   protected function processUsers($users) {
-
-    // @todo: support option to collect specific user documents for testing.
 
     $mbpUserDigest_DirectorProducer = new MBP_UserDigest_DirectorProducer('messageBroker_fanoutUserDigest');
 
@@ -198,11 +189,35 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
       }
       else {
         echo 'MBP_UserDigest_DirectorConsumer->processUsers() rejected user removed from queue.', PHP_EOL;
-        // remove message from queue
-        // Disconnect channel
       }
     }
-
   }
 
+  /**
+   *
+   */
+  protected function processUser() {
+
+    $result = $this->mbToolboxcURL->curlGET($this->message['url']);
+    if ($result[1] == 200) {
+      $user = $result[0];
+
+      // Remove message from queue
+      $this->messageBroker->sendAck($this->message['payload']);
+    }
+    else {
+      echo 'Failed to GET results from: ' . $this->message['url'], PHP_EOL;
+      exit;
+    }
+
+    $mbpUserDigest_DirectorProducer = new MBP_UserDigest_DirectorProducer('messageBroker_fanoutUserDigest');
+
+    $ok = $mbpUserDigest_DirectorProducer->setUser($user);
+    if ($ok) {
+      $mbpUserDigest_DirectorProducer->queueUser($user);
+    }
+    else {
+      echo 'MBP_UserDigest_DirectorConsumer->processUsers() rejected user removed from queue.', PHP_EOL;
+    }
+  }
 }
