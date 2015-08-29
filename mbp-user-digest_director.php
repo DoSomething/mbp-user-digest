@@ -17,10 +17,10 @@ use DoSomething\MBP_UserDigest\MBP_UserDigest_DirectorConsumer;
 require_once __DIR__ . '/mbp-user-digest_director.config.inc';
 
 
-echo '------- mbp-user-digest_director START: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+echo '------- mbp-user-digest_director START: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
 
 // Kick off
 $mb = $mbConfig->getProperty('messageBroker');
 $mb->consumeMessage(array(new MBP_UserDigest_DirectorConsumer(), 'consumeDigestProducerQueue'));
 
-echo '------- mbp-user-digest_director END: ' . date('D M j G:i:s T Y') . ' -------', PHP_EOL;
+echo '------- mbp-user-digest_director END: ' . date('j D M Y G:i:s T') . ' -------', PHP_EOL;
