@@ -6,15 +6,13 @@
 namespace DoSomething\MBP_UserDigest;
 
 use DoSomething\StatHat\Client as StatHat;
-use DoSomething\MB_Toolbox\MB_Toolbox;
-// Adjust path when BaseProducer is moved into MB_Toolbox library
-use DoSomething\MBP_UserDigest\MBP_UserDigest_BaseProducer;
+use DoSomething\MB_Toolbox\MB_Toolbox_BaseProducer;
 
 /*
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
  * entries that match the campaign.*.* binding.
  */
-class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
+class MBP_UserDigest_Producer extends MB_Toolbox_BaseProducer
 {
 
   /**
@@ -40,6 +38,32 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
     $payload = $this->generatePayload();
     $payload = parent::produceMessage($payload, $routingKey);
   }
+
+  /**
+   *  userKickoff() - Create entry in digestProducerQueue for specific user lookups
+   *  in mb-users-api.
+   *
+   *  @param array $targetUsers
+   *    A list of users to generate messages for specific users rather than user
+   *    cursor pages.
+   */
+  public function userKickoff($targetUsers) {
+
+    $url = '/user';
+
+    foreach ($targetUsers as $email) {
+
+      $parameters = array(
+        'email' => $email,
+      );
+      $url .= '?' . http_build_query($parameters);
+      $this->usersPagedURL = $url;
+
+      $routingKey = 'digestProducer';
+      $payload = $this->generatePayload();
+      $payload = parent::produceMessage($payload, $routingKey);
+    }
+  }
   
   /**
    * generatePageRequestsURL: Construct URL to send request for user documents
@@ -52,13 +76,7 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
    */
   static public function generateCursorRequestsURL($_id) {
     
-    $curlUrl = $this->settings['ds_user_api_host'];
-    $port = $this->settings['ds_user_api_port'];
-    if ($port != 0 && is_numeric($port)) {
-      $curlUrl .= ':' . (int) $port;
-    }
-    
-    $usersPagedURL = $curlUrl . '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
+    $usersPagedURL = '/users?page=' . $pageCount . '&pageSize=' . self::PAGE_SIZE . '&excludeNoCampaigns=1';
     return $usersPagedURL;
   }
   
@@ -73,6 +91,11 @@ class MBP_UserDigest_Producer extends MBP_UserDigest_BaseProducer
     return $payload;
   }
 
+  /**
+   * @todo: Add support for test users via CSV file.
+   */
+  public function produceUsersFromCSV($targetFile) {
 
+  }
 
 }
