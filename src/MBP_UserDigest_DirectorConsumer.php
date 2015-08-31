@@ -29,7 +29,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
    */
   public function __construct() {
 
-    parent::_construct();
+    parent::__construct();
     $this->mbToolboxcURL = $this->mbConfig->getProperty('mbToolboxcURL');
   }
 
