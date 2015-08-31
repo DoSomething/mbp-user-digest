@@ -30,6 +30,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
   public function __construct() {
 
     parent::__construct();
+    $this->messageBroker_fanoutUserDigest = $this->mbConfig->getProperty('messageBroker_fanoutUserDigest');
     $this->mbToolboxcURL = $this->mbConfig->getProperty('mbToolboxcURL');
   }
 
@@ -73,8 +74,13 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
 
-    $domain = $this->mbToolbox->resourceByEnviroment('mb_user_api_config');
+    $mbUserAPIConfig = $this->mbConfig->getProperty('mb_user_api_config');
+    $domain = $mbUserAPIConfig['host'];
+    if ($mbUserAPIConfig['port'] > 0 && is_numeric($mbUserAPIConfig['port'])) {
+      $domain .= ':' . (int) $mbUserAPIConfig['port'];
+    }
     $this->message['url'] = $domain . $message['url'];
+    echo 'MBP_UserDigest_DirectorConsumer - setter() url: ' . $this->message['url'], PHP_EOL . PHP_EOL;
   }
 
   /**
@@ -127,7 +133,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
       $meta = $result[0]->meta;
 
       // Remove message from queue
-       $this->messageBroker->sendAck($this->message['payload']);
+      $this->messageBroker->sendAck($this->message['payload']);
     }
     else {
       echo 'Failed to GET results from: ' . $this->message['url'] . ' Status Code: ' . $result[1], PHP_EOL;
@@ -151,7 +157,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
     // @todo: How to use MBP_UserDigest_BaseProducer->generatePayload()
     $message = array(
       'requested' => date('c'),
-      'startTime' => $meta->cursor_start_time,
+      'startTime' => date('c', $meta->cursor_start_time),
     );
 
     if ($meta->direction == 1 && isset($meta->next_page_url)) {
@@ -167,6 +173,10 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
       // @todo: How to use MBP_UserDigest_BaseProducer->produceMessage()
       $payload = serialize($message);
       $this->messageBroker->publish($payload, $routingKey);
+
+      // Close connection to allow other consumers to get in line for message.
+      $channel = $this->messageBroker->connection->channel();
+      $channel->close();
     }
     else {
       echo 'Last page in cursor request, ending process.', PHP_EOL;
