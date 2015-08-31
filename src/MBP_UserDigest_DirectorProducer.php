@@ -12,15 +12,30 @@ use DoSomething\MB_Toolbox\MB_Toolbox_BaseProducer;
  * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
  * entries that match the campaign.*.* binding.
  */
-class MBP_UserDigest_DirectorProducer extends MBP_UserDigest_BaseProducer
+class MBP_UserDigest_DirectorProducer extends MB_Toolbox_BaseProducer
 {
 
   /**
-   * 
-   *
+   * Load connection to MB_Toolbox to gain access to the class constant values.
+   * @var object
+   */
+  protected $mbToolbox;
+
+  /**
+   * A collection of user values to be processed.
    * @var array
    */
   protected $digestUser;
+
+  /**
+   * __construct() : Inherit constructor functionality from BaseProducer and
+   * add mbToolbox object property.
+   */
+  public function __construct($targetMBconfig = 'messageBroker') {
+
+    parent::__construct($targetMBconfig);
+    $this->mbToolbox = $this->mbConfig->getProperty('mbToolbox');
+  }
 
   /**
    * queueUser() : Produce user message for fanout exchange.
@@ -74,9 +89,7 @@ class MBP_UserDigest_DirectorProducer extends MBP_UserDigest_BaseProducer
       }
       else {
         echo 'MBP_UserDigest_DirectorProducer->setUser(): Using default first name for ' . $user->email, PHP_EOL;
-        // Some PHP OO funyiness: http://stackoverflow.com/questions/5447541/accessing-php-class-constants
-        $tempToolbox = $this->toolbox;
-        $this->digestUser['first_name'] = $tempToolbox::DEFAULT_FIRST_NAME;
+        $this->digestUser['first_name'] = constant(get_class($this->mbToolbox)."::DEFAULT_USERNAME");
       }
 
       if (count($user->campaigns) > 0) {
@@ -140,7 +153,7 @@ class MBP_UserDigest_DirectorProducer extends MBP_UserDigest_BaseProducer
     // Exclude users who have have been banned OR no preference has been set for banning
     if ( isset($subscriptions) && !isset($subscriptions->banned) ) {
 
-      // Include users who have no digest unsubscription setting or the subscription for digest
+      // Include users who have no digest un-subscription setting or the subscription for digest
       // messages is true.
       if ( (!isset($subscriptions->digest)) ||
            (isset($subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) ) {
@@ -160,7 +173,7 @@ class MBP_UserDigest_DirectorProducer extends MBP_UserDigest_BaseProducer
 
   /**
    * scrubCampaigns() : Check for required campaign nid and remove campaigns that have been completed.
-   * Compleation is defined as a campaign that has been signed up for and a report as been completed.
+   * Completion is defined as a campaign that has been signed up for and a report as been completed.
    *
    * @param array $campaigns
    *   A list of all the campaigns a user has signed up for and reported back on.
