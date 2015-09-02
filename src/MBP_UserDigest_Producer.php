@@ -1,6 +1,6 @@
 <?php
 /**
- * MBP_UserDigestProducer - Static class of methods to create "snapshot" of mb-user collection. Generate
+ * MBP_UserDigestProducer.php - Static class of methods to create "snapshot" of mb-user collection. Generate
  * queue entries in userDigestProducerQueue to manage paged calls to mb-user collection.
  */
 namespace DoSomething\MBP_UserDigest;
@@ -9,8 +9,7 @@ use DoSomething\StatHat\Client as StatHat;
 use DoSomething\MB_Toolbox\MB_Toolbox_BaseProducer;
 
 /*
- * MBC_UserAPICampaignActivity.class.in: Used to process the transactionalQueue
- * entries that match the campaign.*.* binding.
+ * MBP_UserDigest_Producer: Methods used to start the process of generating a batch of digest messages.
  */
 class MBP_UserDigest_Producer extends MB_Toolbox_BaseProducer
 {
