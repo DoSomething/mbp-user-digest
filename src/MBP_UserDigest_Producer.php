@@ -49,10 +49,9 @@ class MBP_UserDigest_Producer extends MB_Toolbox_BaseProducer
    */
   public function userKickoff($targetUsers) {
 
-    $url = '/user';
-
     foreach ($targetUsers as $email) {
 
+      $url = '/user';
       $parameters = array(
         'email' => $email,
       );
@@ -66,7 +65,7 @@ class MBP_UserDigest_Producer extends MB_Toolbox_BaseProducer
   }
   
   /**
-   * generatePageRequestsURL: Construct URL to send request for user documents
+   * generatePageRequestsURL(): Construct URL to send request for user documents
    *
    * @param integer $page
    *   The page of user documents to request.
@@ -81,7 +80,10 @@ class MBP_UserDigest_Producer extends MB_Toolbox_BaseProducer
   }
   
   /**
-   * generatePayload: Format message payload
+   * generatePayload(): Format message payload
+   *
+   * @return array
+   *   Formatted payload
    */
   protected function generatePayload() {
 
@@ -92,10 +94,20 @@ class MBP_UserDigest_Producer extends MB_Toolbox_BaseProducer
   }
 
   /**
-   * @todo: Add support for test users via CSV file.
+   * produceUsersFromCSV() : Use email addresses defined in CSV file to create digest batch.
+   *
+   * @param string $targetFile
+   *   The name of the CSV file which will contain email address in comma seperated, one
+   *   per line format.
+   *
+   * @return array
    */
-  public function produceUsersFromCSV($targetFile) {
+  static public function produceUsersFromCSV($targetFile) {
 
+    $targetFile = __DIR__ . '/../' . $targetFile;
+    $emails = file($targetFile, FILE_IGNORE_NEW_LINES);
+
+    return $emails;
   }
 
 }
