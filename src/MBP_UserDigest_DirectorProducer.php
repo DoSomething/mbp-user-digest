@@ -105,6 +105,7 @@ class MBP_UserDigest_DirectorProducer extends MB_Toolbox_BaseProducer
       }
       else {
         echo 'MBP_UserDigest_DirectorProducer->setUser(): drupal_uid not set for ' . $user->email, PHP_EOL;
+        echo 'user object: ' . print_r($user, TRUE), PHP_EOL . PHP_EOL;
         return FALSE;
       }
 
