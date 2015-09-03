@@ -8,7 +8,7 @@
  */
 
 // The number of documents to request in each page request
-define('PAGE_SIZE', 50);
+define('PAGE_SIZE', 5000);
 
 date_default_timezone_set('America/New_York');
 define('CONFIG_PATH',  __DIR__ . '/messagebroker-config');
