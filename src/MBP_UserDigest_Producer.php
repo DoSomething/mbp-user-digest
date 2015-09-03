@@ -50,16 +50,18 @@ class MBP_UserDigest_Producer extends MB_Toolbox_BaseProducer
 
     foreach ($targetUsers as $email) {
 
-      $url = '/user';
-      $parameters = array(
-        'email' => $email,
-      );
-      $url .= '?' . http_build_query($parameters);
-      $this->usersPagedURL = $url;
+      if (strlen($email) > 0) {
+        $url = '/user';
+        $parameters = array(
+          'email' => $email,
+        );
+        $url .= '?' . http_build_query($parameters);
+        $this->usersPagedURL = $url;
 
-      $routingKey = 'digestProducer';
-      $payload = $this->generatePayload();
-      $payload = parent::produceMessage($payload, $routingKey);
+        $routingKey = 'digestProducer';
+        $payload = $this->generatePayload();
+        $payload = parent::produceMessage($payload, $routingKey);
+      }
     }
   }
   
