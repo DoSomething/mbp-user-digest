@@ -137,7 +137,6 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
     }
     else {
       echo 'Failed to GET results from: ' . $this->message['url'] . ' Status Code: ' . $result[1], PHP_EOL;
-      exit;
     }
 
     return array($users, $meta);
@@ -179,8 +178,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
       $channel->close();
     }
     else {
-      echo 'Last page in cursor request, ending process.', PHP_EOL;
-      exit;
+      echo 'Last page in cursor request, ending cursur requests.', PHP_EOL;
     }
 
   }
