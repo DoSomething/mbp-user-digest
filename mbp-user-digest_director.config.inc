@@ -55,3 +55,9 @@ $mbConfig->setProperty('statHat', new StatHat([
 $mbConfig->setProperty('mbToolbox', new MB_Toolbox());
 $mbConfig->setProperty('mbToolboxcURL', new MB_Toolbox_cURL());
 
+$mbConfig->setProperty('mbRabbitMQManagementAPI', new MB_RabbitMQManagementAPI([
+  'domain' => getenv("MB_RABBITMQ_MANAGEMENT_API_HOST"),
+  'port' => getenv('MB_RABBITMQ_MANAGEMENT_API_PORT'),
+  'vhost' => getenv('MB_RABBITMQ_MANAGEMENT_API_VHOST'),
+  'password' => getenv('MB_RABBITMQ_MANAGEMENT_API_PASSWORD')
+]));
