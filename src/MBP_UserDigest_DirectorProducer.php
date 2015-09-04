@@ -123,19 +123,20 @@ class MBP_UserDigest_DirectorProducer extends MB_Toolbox_BaseProducer
    */
   private function isValidEmail($email) {
 
-    // Test 1
-    if (isset($email) && $email == '' && filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-      echo 'MBP_UserDigest_DirectorProducer->isValidEmail() failed test 1 - FILTER_VALIDATE_EMAIL: ' . $email, PHP_EOL;
+    if (isset($email) && $email == '') {
+      echo 'MBP_UserDigest_DirectorProducer->isValidEmail() failed test 1 - Email value blank: ' . $email, PHP_EOL;
       return FALSE;
     }
-    // Test 2
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+      echo 'MBP_UserDigest_DirectorProducer->isValidEmail() failed test 2 - FILTER_VALIDATE_EMAIL: ' . $email, PHP_EOL;
+      return FALSE;
+    }
     if (isset($email) && strlen(substr($email, strpos($email, '@mobile'))) <= 7) {
-      echo 'MBP_UserDigest_DirectorProducer->isValidEmail() failed test 2 - @mobile: ' . $email, PHP_EOL;
+      echo 'MBP_UserDigest_DirectorProducer->isValidEmail() failed test 3 - @mobile: ' . $email, PHP_EOL;
       return FALSE;
     }
-    // Test 3
     elseif (isset($email) && strpos($email, '@mobile') != FALSE) {
-      echo 'MBP_UserDigest_DirectorProducer->isValidEmail() failed test 3 - @mobile: ' . $email, PHP_EOL;
+      echo 'MBP_UserDigest_DirectorProducer->isValidEmail() failed test 4 - @mobile: ' . $email, PHP_EOL;
       return FALSE;
     }
 
