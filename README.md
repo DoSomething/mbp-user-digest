@@ -1,9 +1,13 @@
 mbp-user-digest
 ===============
 
+A user digest message is a summary of the users campaign activity to inform them of the status of the campaigns
+they're signed up for. The producer micro-service of digest generation process is responsible for gathering the user documents and directing the results as messages for the consumer part of the generation process.
+
+####The Process
 Producer for the Message Broker system to manage the production of user digest messages. The process consists of:
 
-- initiating the generation of digest message (mbp-user-digest_producer.php):
+- initiating the generation of digest messages (mbp-user-digest_producer.php):
 ```
 $ php mbp-user-digest_producer.php
 $ php mbp-user-digest_producer.php?targetUser=xxx@dosomething.org
@@ -18,7 +22,7 @@ http://xx.xx.xx.xx/mbp-user-digest_producer.php?targetUser=xxx@dosomething.org
 http://xx.xx.xx.xx/mbp-user-digest_producer.php?targetUsers=emails.csv.org
 ```
 
-Which creates a message in the digestProducerQueue defining how to call mb-user-api /users?type=cursor or /user.
+Which creates a message in the digestProducerQueue with messages defining how to call mb-user-api using /users?type=cursor or /user. A queue entry will consist of a message with the payload of:
 
 ```
 a:3:{
@@ -28,16 +32,16 @@ a:3:{
 }
 ```
 
-mbp-user-digest_director.php consumes digestProducerQueue as a daemon process to produce new messages in digestProducerQueue. The additional messages will trigger the subsequent paged cursor requests to mb-user-api. mbp-user-digest_director also sends messages to the fanout exchange (fanoutUserDigest) that results in duplicate messages in:
+mbp-user-digest_director.php consumes digestProducerQueue as a daemon process.  First it produces a new message in digestProducerQueue detailing the next paded request to mb-users-api. Second the daemon sends messages to the fanout exchange (fanoutUserDigest) that results in duplicate messages in:
 - digestCampaignsQueue (future release)
 - digestUnsubscribeQueue (future release)
 - digestUserQueue (mbc-digest-email)
 
-Each queue has the same message detailing the object found by the call to /user on the mb-user-api.
+This process can be parallelized to increase the rate in with the producer part of the digest generatation process takes.
+
+Each of queues connected to the fanout exchange will have the same message detailing the user documents found by the call to /user on the mb-user-api. The fanout allows for concurrency processing of the sperate parts of digest generation process.
 
 
-A user digest message is a summary of the users campaign activity to inform them of the status of the campaigns
-they're signed up for.
-
+####References
 - General Message Broker details: https://github.com/DoSomething/message-broker/wiki
 - Information about the digest functionality within the Message Broker system: https://github.com/DoSomething/message-broker/wiki/User-Digest
