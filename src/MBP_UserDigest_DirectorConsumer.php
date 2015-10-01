@@ -74,6 +74,10 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
    */
   protected function setter($message) {
 
+    // Remove encoding to support email addresses which get encoded, example: "@" encodes to %40
+    $this->message['url'] = urldecode($message['url']);
+    $message['url'] = urldecode($message['url']);
+
     $mbUserAPIConfig = $this->mbConfig->getProperty('mb_user_api_config');
     $domain = $mbUserAPIConfig['host'];
     if ($mbUserAPIConfig['port'] > 0 && is_numeric($mbUserAPIConfig['port'])) {
