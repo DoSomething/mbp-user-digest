@@ -153,12 +153,13 @@ class MBP_UserDigest_DirectorProducer extends MB_Toolbox_BaseProducer
   private function isSubscribed($subscriptions) {
 
     // Exclude users who have have been banned OR no preference has been set for banning
-    if ( isset($subscriptions) && !isset($subscriptions->banned) ) {
+    if ( isset($subscriptions) &&
+        (!isset($subscriptions->banned) || $subscriptions->banned == FALSE || $subscriptions->banned == 'false')) {
 
       // Include users who have no digest un-subscription setting or the subscription for digest
       // messages is true.
       if ( (!isset($subscriptions->digest)) ||
-           (isset($subscriptions->digest) && $userApiResult->subscriptions->digest == TRUE) ) {
+           (isset($subscriptions->digest) && $subscriptions->digest == TRUE) ) {
         return TRUE;
       }
       // Exclude users who have unsubscribed from Digest messages
