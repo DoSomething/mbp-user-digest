@@ -35,8 +35,8 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
   }
 
   /**
-   * Initial method triggered by blocked call in mbc-registration-mobile.php. The $payload is the
-   * contents of the message being processed from the queue.
+   * Initial method triggered by blocked call in mbp-user-digest_director.php. $payload
+   * is the contents of the message being processed from the queue.
    *
    * @param array $payload
    *   The contents of the queue entry
@@ -75,7 +75,6 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
   protected function setter($message) {
 
     // Remove encoding to support email addresses which get encoded, example: "@" encodes to %40
-    $this->message['url'] = urldecode($message['url']);
     $message['url'] = urldecode($message['url']);
 
     $mbUserAPIConfig = $this->mbConfig->getProperty('mb_user_api_config');
