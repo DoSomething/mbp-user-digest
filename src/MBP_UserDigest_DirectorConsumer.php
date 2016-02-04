@@ -76,6 +76,10 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
 
     // Remove encoding to support email addresses which get encoded, example: "@" encodes to %40
     $message['url'] = urldecode($message['url']);
+    // Allow plus sign in emails, like sergii+test@example.com.
+    // Without this hack, plus is interpreted as a whitespace in URL and the API
+    // returns an error.
+    $message['url'] = str_replace('+', '%2B', $message['url']);
 
     $mbUserAPIConfig = $this->mbConfig->getProperty('mb_user_api_config');
     $domain = $mbUserAPIConfig['host'];
