@@ -15,30 +15,27 @@ require_once __DIR__ . '/messagebroker-config/mb-secure-config.inc';
 $mbConfig = MB_Configuration::getInstance();
 
 // Settings
-$mbConfig->setProperty('rabbit_credentials', array(
+$mbConfig->setProperty('rabbit_credentials', [
   'host' =>  getenv("RABBITMQ_HOST"),
   'port' => getenv("RABBITMQ_PORT"),
   'username' => getenv("RABBITMQ_USERNAME"),
   'password' => getenv("RABBITMQ_PASSWORD"),
   'vhost' => getenv("RABBITMQ_VHOST"),
-));
+]);
 
-$mbConfig->setProperty('ds_drupal_api_config', array(
+$mbConfig->setProperty('ds_drupal_api_config', [
   'host' => getenv("DS_DRUPAL_API_HOST"),
   'port' => getenv('DS_DRUPAL_API_PORT')
-));
-$mbConfig->setProperty('mb_user_api_config', array(
+]);
+$mbConfig->setProperty('mb_user_api_config', [
   'host' => getenv("MB_USER_API_HOST"),
   'port' => getenv('MB_USER_API_PORT')
-));
+]);
 
-$mbRabbitConfig = $mbConfig->constructRabbitConfig('directUserDigest', array('digestProducerQueue'));
-$mbConfig->setProperty('messageBroker_config', $mbRabbitConfig);
-
-// Create untility objects for access anywhere within the application as a single instance
+$mbRabbitConfig = $mbConfig->constructRabbitConfig('directUserDigest', ['digestProducerQueue']);
 $rabbitCredentials = $mbConfig->getProperty('rabbit_credentials');
-$messageBrokerConfig = $mbConfig->getProperty('messageBroker_config');
-$mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $messageBrokerConfig));
+// Create untility objects for access anywhere within the application as a single instance
+$mbConfig->setProperty('messageBroker', new MessageBroker($rabbitCredentials, $mbRabbitConfig));
 
 $mbConfig->setProperty('statHat', new StatHat([
   'ez_key' => getenv("STATHAT_EZKEY"),
