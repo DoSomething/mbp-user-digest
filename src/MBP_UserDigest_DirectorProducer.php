@@ -84,7 +84,7 @@ class MBP_UserDigest_DirectorProducer extends MB_Toolbox_BaseProducer
         return FALSE;
       }
 
-      if (isset($user->first_name) && $user->first_name != '') {
+      if (!empty($user->first_name)) {
         $this->digestUser['first_name'] = $user->first_name;
       }
       else {
