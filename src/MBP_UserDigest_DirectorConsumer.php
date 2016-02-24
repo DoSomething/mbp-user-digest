@@ -221,7 +221,7 @@ class MBP_UserDigest_DirectorConsumer extends MB_Toolbox_BaseConsumer
       $this->messageBroker->sendAck($this->message['payload']);
     }
     else {
-      echo 'Failed to GET results from: ' . $this->message['url'], PHP_EOL;
+      echo 'Failed to GET results from: ' . $this->message['url'] . ' Status Code: ' . $result[1] . ' Error: ' . print_r($result[0], TRUE), PHP_EOL;
       exit;
     }
 
