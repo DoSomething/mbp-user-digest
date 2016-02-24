@@ -1,11 +1,11 @@
 mbp-user-digest
 ===============
 
-A user digest message is a summary of the users campaign activity to inform them of the status of the campaigns
-they're signed up for. The producer micro-service of digest generation process is responsible for gathering the user documents and directing the results as messages for the consumer part of the generation process.
+A digest email message is a summary of the users campaign activity. A listing of their active campaigns informs them of the their status in the campaign.
 
 ####The Process
-Producer for the Message Broker system to manage the production of user digest messages. The process consists of:
+
+- Gather user documents from mb-user database which have campaign activity information.
 
 - initiating the generation of digest messages (mbp-user-digest_producer.php):
 ```
@@ -13,14 +13,7 @@ $ php mbp-user-digest_producer.php
 $ php mbp-user-digest_producer.php?targetUser=xxx@dosomething.org
 $ php mbp-user-digest_producer.php?targetUsers=emails.csv
 ```
-
-or
-
-```
-http://xx.xx.xx.xx/mbp-user-digest_producer.php
-http://xx.xx.xx.xx/mbp-user-digest_producer.php?targetUser=xxx@dosomething.org
-http://xx.xx.xx.xx/mbp-user-digest_producer.php?targetUsers=emails.csv.org
-```
+from the command line or as scheduled job in Jenkins.
 
 Which creates a message in the digestProducerQueue with messages defining how to call mb-user-api using /users?type=cursor or /user. A queue entry will consist of a message with the payload of:
 
